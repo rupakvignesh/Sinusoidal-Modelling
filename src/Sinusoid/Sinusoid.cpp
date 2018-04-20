@@ -63,7 +63,7 @@ Error_t CSinusoid::init(int iBlockSize, int iHopSize, float fSampleRateInHz, flo
     ///////////////////////////////////////////////////////////////////////////////////
     //Creating and initializing Fft
     CFft::createInstance(m_pCFft);
-    m_pCFft->initInstance(m_afParams[kNumFFT],2);
+    m_pCFft->initInstance(m_afParams[kNumFFT],2,CFft::kWindowHamming);
     
     ///////////////////////////////////////////////////////////////////////////////////
     //Initializing private pointers
@@ -195,3 +195,19 @@ float CSinusoid::getParam(CSinusoid::SinusoidParam_t eParam) const
     }
     return m_afParams[eParam];
 }
+
+//Error_t CSinusoid::generateSynthWindow()
+//{
+//    
+//    m_pfSynthWindow = new float [(int) m_afParams[CSinusoid::kNumFFT]];
+//    
+//    for(int i = 0;i<(int) m_afParams[CSinusoid::kHopSize];i++)
+//    {
+//        m_pfSynthWindow[(int) m_afParams[CSinusoid::kNumFFT]/2 - (int) m_afParams[CSinusoid::kHopSize] + i] = (float) i/ m_afParams[CSinusoid::kHopSize];
+//        
+//         m_pfSynthWindow[(int) m_afParams[CSinusoid::kNumFFT]/2 + (int) m_afParams[CSinusoid::kHopSize] - i] = (float) (i+1)/ m_afParams[CSinusoid::kHopSize];
+//    }
+//    
+//    
+//    return kNoError;
+//}

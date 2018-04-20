@@ -33,8 +33,25 @@ Error_t CSinusoid::init(int iBlockSize, int iHopSize, float fSampleRateInHz, flo
     {
         reset();
     }
-    m_fSampleRateHz = fSampleRateInHz;
     
+    ///////////////////////////////////////////////////////////////////////////////////
+    //Setting sample rate
+    m_fSampleRateHz = fSampleRateInHz;
+
+    ///////////////////////////////////////////////////////////////////////////////////
+    //Setting parameter ranges
+    m_aafParamRange[CSinusoid::kNumFFT][0] = 0;
+    m_aafParamRange[CSinusoid::kNumFFT][1] = 4096;
+    
+    m_aafParamRange[CSinusoid::kHopSize][0] = 0;
+    m_aafParamRange[CSinusoid::kHopSize][0] = iBlockSize;
+    
+    m_aafParamRange[CSinusoid::kMaxNSines][0] = 0;
+    m_aafParamRange[CSinusoid::kMaxNSines][1] = 300;
+    
+    
+    ///////////////////////////////////////////////////////////////////////////////////
+    //Setting parameter values
     setParam(CSinusoid::kNumFFT, iBlockSize);
     setParam(CSinusoid::kHopSize, iHopSize);
     setParam(CSinusoid::kMaxNSines, fMaxNSines);
@@ -43,8 +60,13 @@ Error_t CSinusoid::init(int iBlockSize, int iHopSize, float fSampleRateInHz, flo
     setParam(CSinusoid::kAmpThresdB, fAmpThresdB);
     setParam(CSinusoid::kMinSinDur, fMinSinDur);
     
+    ///////////////////////////////////////////////////////////////////////////////////
+    //Creating and initializing Fft
+    CFft::createInstance(m_pCFft);
     m_pCFft->initInstance(m_afParams[kNumFFT],2);
     
+    ///////////////////////////////////////////////////////////////////////////////////
+    //Initializing private pointers
     m_piPeakLoc     = new int   [(int)m_afParams[CSinusoid::kMaxNSines]];
     m_pfIpMag       = new float [(int)m_afParams[CSinusoid::kMaxNSines]];
     m_pfIpPhase     = new float [(int)m_afParams[CSinusoid::kMaxNSines]];
@@ -63,8 +85,12 @@ Error_t CSinusoid::reset ()
     {
         return kNotInitializedError;
     }
-    
+    ///////////////////////////////////////////////////////////////////////////////////
+    //Deleting 
     CFft::destroyInstance(m_pCFft);
+    
+    ///////////////////////////////////////////////////////////////////////////////////
+    //Deletingprivate pointers
     delete m_piPeakLoc;
     delete m_pfIpPeakLoc;
     delete m_pfIpPhase;
@@ -74,8 +100,10 @@ Error_t CSinusoid::reset ()
     
 }
 
-Error_t CSinusoid::analyze(float *pfInputBuffer, int NumFrames)
+Error_t CSinusoid::analyze(float *pfInputBuffer)
 {
+    ///////////////////////////////////////////////////////////////////////////////////
+    //Initializing variables
     float *pfMagSpectrum = new float [(int) m_afParams[CSinusoid::kNumFFT] +1];
     float *pfPhaseSpectrum = new float [(int) m_afParams[CSinusoid::kNumFFT] +1];
     CFft::complex_t *pfSpectrum = new CFft::complex_t [(int) m_afParams[CSinusoid::kNumFFT] *2];
@@ -91,15 +119,24 @@ Error_t CSinusoid::analyze(float *pfInputBuffer, int NumFrames)
     
     //Peak interpolation
     peakInterp(pfMagSpectrum, pfPhaseSpectrum);
+    
     return kNoError;
     
 }
 
 Error_t CSinusoid::synthesize(float *pfOutputBuffer)
 {
+    ///////////////////////////////////////////////////////////////////////////////////
+    //Generate sine waves in frequency domain
     float *pfReal = new float [(int) m_afParams[CSinusoid::kNumFFT] +1];
     float *pfImag = new float [(int) m_afParams[CSinusoid::kNumFFT] +1];
-    genspecsines_C(m_pfIpPeakLoc, m_pfIpMag, m_pfIpPhase, m_iNumPeaksDetected, pfReal, pfImag, 1);
+    genspecsines_C(m_pfIpPeakLoc, m_pfIpMag, m_pfIpPhase, m_iNumPeaksDetected, pfReal, pfImag, 1); //Not sure what the last value is
+    
+    ///////////////////////////////////////////////////////////////////////////////////
+    //Ifft
+    
+    ///////////////////////////////////////////////////////////////////////////////////
+    //Apply inverse window
     
     
     return kNoError;
@@ -141,4 +178,20 @@ Error_t CSinusoid::peakInterp(float *pfMagSpectrum, float *pfPhaseSpectrum)
     return kNoError;
 }
 
+Error_t CSinusoid::setParam(CSinusoid::SinusoidParam_t eParam, float fParamValue)
+{
+    ///////////////////////////////////////////////////////////////////////////////////
+    //Implementation without checking the parameter range
+    m_afParams[eParam] = fParamValue;
+    
+    return kNoError;
+}
 
+float CSinusoid::getParam(CSinusoid::SinusoidParam_t eParam) const
+{
+    if(!m_bIsInitialized)
+    {
+        return kNotInitializedError;
+    }
+    return m_afParams[eParam];
+}

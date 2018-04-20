@@ -24,8 +24,8 @@ public:
     Error_t init( int iBlockSize, int iHopSize, float fSampleRateInHz, float fMaxNSines, float fMinSinDur, float fFreqDevOffset, float fFreqDevSlope, float fAmpThresdB);
     Error_t reset();
     Error_t setParam(SinusoidParam_t eParam, float fParamValue);
-    float   getParam() const;
-    Error_t analyze(float* fInputBuffer, int iNumFrames);
+    float   getParam(SinusoidParam_t eParam) const;
+    Error_t analyze(float* fInputBuffer);
     Error_t synthesize(float *pfOutputBuffer);
     Error_t process();
     

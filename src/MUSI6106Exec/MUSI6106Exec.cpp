@@ -5,7 +5,6 @@
 #include "MUSI6106Config.h"
 
 #include "AudioFileIf.h"
-#include "Vibrato.h"
 
 using std::cout;
 using std::endl;
@@ -33,7 +32,6 @@ int main(int argc, char* argv[])
     std::fstream            hOutputFile;
     CAudioFileIf::FileSpec_t stFileSpec;
 
-    CVibrato                *pCCVibrato  = 0;
     float                   fSampleRateInHz = 44100;
     float                   fMaxDelayInSec = 0.01;
     float                   fDelayInSec    = 0.01;
@@ -118,12 +116,7 @@ int main(int argc, char* argv[])
     for (int i = 0; i < stFileSpec.iNumChannels; i++)
         ppfOutputBuffer[i] = new float[kBlockSize];
     
-    CVibrato::create(pCCVibrato);
-    pCCVibrato->init(fMaxDelayInSec,fSampleRateInHz, stFileSpec.iNumChannels);
-    pCCVibrato->setParam(CVibrato::kParamDelay, fDelayInSec);
-    pCCVibrato->setParam(CVibrato::kParamWidth, fWidthInSec);
-    pCCVibrato->setParam(CVibrato::kParamModulation, fModFreqInHz);
-    
+
     //////////////////////////////////////////////////////////////////////////////
     // Set Vibrato parameters
     
@@ -134,7 +127,6 @@ int main(int argc, char* argv[])
     {
         long long iNumFrames = kBlockSize;
         phAudioFile->readData(ppfAudioData, iNumFrames);
-        pCCVibrato->process(ppfAudioData, ppfOutputBuffer, iNumFrames, iCounter);
         pCInstance->writeData(ppfOutputBuffer, iNumFrames);
         cout << "\r" << "reading and writing";
 
@@ -154,20 +146,8 @@ int main(int argc, char* argv[])
     // clean-up
     CAudioFileIf::destroy(phAudioFile);
     CAudioFileIf::destroy(pCInstance);
-    CVibrato::destroy(pCCVibrato);
-    hOutputFile.close();
 
-    for (int i = 0; i < stFileSpec.iNumChannels; i++)
-        delete[] ppfAudioData[i];
-    delete[] ppfAudioData;
-    ppfAudioData = 0;
-    
-    for (int i = 0; i < stFileSpec.iNumChannels; i++)
-        delete[] ppfOutputBuffer[i];
-    delete[] ppfOutputBuffer;
-    ppfOutputBuffer = 0;
-
-    return 0;
+ 
 
 }
 

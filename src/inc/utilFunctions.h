@@ -33,12 +33,12 @@
 #define TWM_rho 0.33               //weighting of MP error
 #define MAXNPEAKS 10               // maximum number of peaks used for TWM 
 
-void genbh92lobe_C(double *x, double *y, int N);
-void genspecsines_C(double *iploc, double *ipmag, double *ipphase, int n_peaks, double *real, double*imag, int size_spec);
-void maxValArg(double *data, int dLen, double *max_val, int*max_ind);
-void minValArg(double *data, int dLen, double *min_val, int*min_ind);
-void computeTWMError(double **peakMTX1, int nCols1, double **peakMTX2, int nCols2, int maxnpeaks, double * pmag, double *f0Error, int nF0Cands, int PMorMP);
-int nearestElement(double val, double *data, int len, double *min_val);
-int TWM_C(double *pfreq, double *pmag, int nPeaks, double *f0c, int nf0c, double *f0, double *f0error);
+void genbh92lobe_C(float *x, float *y, int N);
+void genspecsines_C(float *iploc, float *ipmag, float *ipphase, int n_peaks, float *real, float*imag, int size_spec);
+void maxValArg(float *data, int dLen, float *max_val, int*max_ind);
+void minValArg(float *data, int dLen, float *min_val, int*min_ind);
+void computeTWMError(float **peakMTX1, int nCols1, float **peakMTX2, int nCols2, int maxnpeaks, float * pmag, float *f0Error, int nF0Cands, int PMorMP);
+int nearestElement(float val, float *data, int len, float *min_val);
+int TWM_C(float *pfreq, float *pmag, int nPeaks, float *f0c, int nf0c, float *f0, float *f0error);
 
 #endif  //UTILFUNCTIONS_H

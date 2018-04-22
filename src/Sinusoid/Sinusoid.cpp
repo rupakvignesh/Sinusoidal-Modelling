@@ -92,7 +92,7 @@ Error_t CSinusoid::init(int iBlockSize, int iHopSize, float fSampleRateInHz, flo
     ///////////////////////////////////////////////////////////////////////////////////
     //Creating and initializing Fft
     CFft::createInstance(m_pCFft);
-    m_pCFft->initInstance(m_afParams[kNumFFT],2);
+    m_pCFft->initInstance(m_afParams[kNumFFT],2,CFft::kWindowHamming);
     
     ///////////////////////////////////////////////////////////////////////////////////
     //Initializing private pointers
@@ -228,5 +228,6 @@ float CSinusoid::getParam(CSinusoid::SinusoidParam_t eParam) const
     }
     return m_afParams[eParam];
 }
+
 
 

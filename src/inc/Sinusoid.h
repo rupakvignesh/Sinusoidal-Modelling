@@ -57,6 +57,9 @@ private:
     Error_t peakInterp(float* pfFFTMag, float* pfFFTPhase);
     
     
+//    Error_t generateSynthWindow();
+//    float *m_pfSynthWindow;
+    
 };
 
 #endif

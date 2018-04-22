@@ -4,6 +4,35 @@
 #include "utilFunctions.h"
 #include "ErrorDef.h"
 #include "Fft.h"
+#include "Synthesis.h"
+
+int mod(int a, int b){
+    int c = a%b;
+    return (c<0) ? c + b : c;
+}
+
+float linInterp(float iploc, float fVal1, float fVal2){
+    
+    float i1 = iploc - floor(iploc);
+    return (1-i1)*fVal2 + i1*fVal1;
+}
+
+void applyWindow(float *pfOutputBuffer, const int iNumFrames){
+    
+    //Apply triangle
+    for (int i=0; i<iNumFrames/2; i++){
+        pfOutputBuffer[i] *= i/(iNumFrames/2);
+    }
+    for (int i=0; i<iNumFrames/2; i++){
+        pfOutputBuffer[iNumFrames-i-1] *= i/(iNumFrames/2);
+    }
+    
+    //Apply inverse hamming
+    for (int i=0; i<iNumFrames; i++){
+        pfOutputBuffer[i] /= (0.53836 - 0.46164*cos(2*3.14*i/(iNumFrames)));
+    }
+    
+}
 
 Error_t CSinusoid::create(CSinusoid *&pCSinusoid)
 {
@@ -130,14 +159,17 @@ Error_t CSinusoid::synthesize(float *pfOutputBuffer)
     //Generate sine waves in frequency domain
     float *pfReal = new float [(int) m_afParams[CSinusoid::kNumFFT] +1];
     float *pfImag = new float [(int) m_afParams[CSinusoid::kNumFFT] +1];
-    genspecsines_C(m_pfIpPeakLoc, m_pfIpMag, m_pfIpPhase, m_iNumPeaksDetected, pfReal, pfImag, 1); //Not sure what the last value is
+    genspecsines_C(m_pfIpPeakLoc, m_pfIpMag, m_pfIpPhase, m_iNumPeaksDetected, pfReal, pfImag, (int)m_afParams[CSinusoid::kNumFFT]);
     
     ///////////////////////////////////////////////////////////////////////////////////
     //Ifft
-    
+    CFft::complex_t *pfSpectrum = new CFft::complex_t [(int) m_afParams[CSinusoid::kNumFFT] *2];
+    m_pCFft->mergeRealImag(pfSpectrum, pfReal, pfImag);
+    m_pCFft->doInvFft(pfOutputBuffer, pfSpectrum);
     ///////////////////////////////////////////////////////////////////////////////////
     //Apply inverse window
     
+    applyWindow(pfOutputBuffer, (int) m_afParams[CSinusoid::kNumFFT]);
     
     return kNoError;
 }
@@ -172,7 +204,8 @@ Error_t CSinusoid::peakInterp(float *pfMagSpectrum, float *pfPhaseSpectrum)
         m_pfIpPeakLoc[i] = m_piPeakLoc[i] + 0.5*(fLeftVal-fRightVal)*(fLeftVal-2*fCurrVal+fRightVal);
         m_pfIpMag[i] = fCurrVal - 0.25*(fLeftVal-fRightVal)*(m_pfIpPeakLoc[i] - m_piPeakLoc[i]);
         
-        //Need to do linear interpolation for phase Python code: ipphase = np.interp(iploc, np.arange(0, pX.size), pX)
+        //to do //Need to do linear interpolation for phase Python code: ipphase = np.interp(iploc, np.arange(0, pX.size), pX)
+        m_pfIpPhase[i] = linInterp(m_pfIpPeakLoc[i], pfPhaseSpectrum[m_piPeakLoc[i]-1], pfPhaseSpectrum[m_piPeakLoc[i]]);
     }
     
     return kNoError;
@@ -195,3 +228,5 @@ float CSinusoid::getParam(CSinusoid::SinusoidParam_t eParam) const
     }
     return m_afParams[eParam];
 }
+
+

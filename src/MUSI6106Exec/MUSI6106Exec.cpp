@@ -5,6 +5,7 @@
 #include "MUSI6106Config.h"
 
 #include "AudioFileIf.h"
+#include "Sinusoid.h"
 
 using std::cout;
 using std::endl;
@@ -19,7 +20,7 @@ int main(int argc, char* argv[])
     std::string             sInputFilePath,                 //!< file paths
         sOutputFilePath;
 
-    static const int        kBlockSize = 1024;
+    static const int        kBlockSize = 2048;
 
     clock_t                 time = 0;
 
@@ -33,12 +34,8 @@ int main(int argc, char* argv[])
     CAudioFileIf::FileSpec_t stFileSpec;
 
     float                   fSampleRateInHz = 44100;
-    float                   fMaxDelayInSec = 0.01;
-    float                   fDelayInSec    = 0.01;
-    float                   fWidthInSec    = 0.01;
-    float                   fModFreqInHz   = 10;
-    int                     iCounter       = 0;
     CAudioFileIf            *pCInstance = 0;
+    CSinusoid               *pCSinusoid = 0;
 
     showClInfo();
 
@@ -55,30 +52,7 @@ int main(int argc, char* argv[])
         sOutputFilePath = sInputFilePath + ".txt";
         
     }
-    else if(argc == 3)
-    {
-        sInputFilePath = argv[1];
-        sOutputFilePath = sInputFilePath + ".txt";
-        fDelayInSec     = std::stof(argv[2]);
-        fWidthInSec     = fDelayInSec;
-    }
-    else if(argc == 4)
-    {
-        sInputFilePath  = argv[1];
-        sOutputFilePath = sInputFilePath + ".txt";
-        fDelayInSec     = std::stof(argv[2]);
-        fWidthInSec     = fDelayInSec;
-        fModFreqInHz    = std::stof(argv[3]);
-    }
-    else if(argc ==5)
-    {
-        sInputFilePath  = argv[1];
-        sOutputFilePath = sInputFilePath + ".txt";
-        fDelayInSec     = std::stof(argv[2]);
-        fModFreqInHz    = std::stof(argv[3]);
-        fWidthInSec     = std::stof(argv[4]);;
-
-    }
+    
 
     //////////////////////////////////////////////////////////////////////////////
     // open the input wave file
@@ -118,7 +92,10 @@ int main(int argc, char* argv[])
     
 
     //////////////////////////////////////////////////////////////////////////////
-    // Set Vibrato parameters
+    // Set Sinusoid parameters
+    
+    CSinusoid::create(pCSinusoid);
+    pCSinusoid->init(kBlockSize, 1024, fSampleRateInHz, 1024, 0, 0, 0, 0);
     
     time = clock();
     //////////////////////////////////////////////////////////////////////////////
@@ -127,6 +104,8 @@ int main(int argc, char* argv[])
     {
         long long iNumFrames = kBlockSize;
         phAudioFile->readData(ppfAudioData, iNumFrames);
+        pCSinusoid->analyze(ppfAudioData[0]);
+        pCSinusoid->synthesize(ppfOutputBuffer[0]);
         pCInstance->writeData(ppfOutputBuffer, iNumFrames);
         cout << "\r" << "reading and writing";
 
@@ -146,6 +125,7 @@ int main(int argc, char* argv[])
     // clean-up
     CAudioFileIf::destroy(phAudioFile);
     CAudioFileIf::destroy(pCInstance);
+    CSinusoid::destroy(pCSinusoid);
 
  
 

@@ -1,10 +1,23 @@
 
 #include <iostream>
+
 #include "Sinusoid.h"
-#include "utilFunctions.h"
 #include "ErrorDef.h"
 #include "Fft.h"
 #include "Synthesis.h"
+
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+    
+    #include "utilFunctions.h"
+    
+#ifdef __cplusplus
+}
+#endif
+
 
 int mod(int a, int b){
     int c = a%b;
@@ -21,15 +34,15 @@ void applyWindow(float *pfOutputBuffer, const int iNumFrames){
     
     //Apply triangle
     for (int i=0; i<iNumFrames/2; i++){
-        pfOutputBuffer[i] *= i/(iNumFrames/2);
+        pfOutputBuffer[i] *= (float)i/((float)iNumFrames/2);
     }
     for (int i=0; i<iNumFrames/2; i++){
-        pfOutputBuffer[iNumFrames-i-1] *= i/(iNumFrames/2);
+        pfOutputBuffer[iNumFrames-i-1] *= (float)i/((float)iNumFrames/2);
     }
     
     //Apply inverse hamming
     for (int i=0; i<iNumFrames; i++){
-        pfOutputBuffer[i] /= (0.53836 - 0.46164*cos(2*3.14*i/(iNumFrames)));
+        pfOutputBuffer[i] /= (0.53836 - 0.46164*cos(2*3.14*i/((float)iNumFrames)));
     }
     
 }
@@ -177,6 +190,7 @@ Error_t CSinusoid::synthesize(float *pfOutputBuffer)
 Error_t CSinusoid::peakDetection(float *pfMagSpectrum)
 {
     int k = 0;
+//    float fMinOfMax = 0;
     for(int i = 1; i<m_afParams[kNumFFT]-1;i++)
     {
         if(pfMagSpectrum[i]>m_afParams[CSinusoid::kAmpThresdB] && pfMagSpectrum[i]>pfMagSpectrum[i-1] && pfMagSpectrum[i]>pfMagSpectrum[i+1])

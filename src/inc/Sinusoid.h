@@ -30,12 +30,11 @@ public:
     Error_t process();
     
     
-    virtual ~CSinusoid();
+    virtual ~CSinusoid(){};
     
     
     
 private:
-    CSinusoid();
     bool m_isInParamRange (SinusoidParam_t eParam, float fParamValue);
     bool m_bIsInitialized;
     float m_fSampleRateHz;

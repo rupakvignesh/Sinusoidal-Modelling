@@ -173,6 +173,26 @@ Error_t CFft::getMagnitude( float *pfMag, const complex_t *pfSpectrum ) const
     return kNoError;
 }
 
+Error_t CFft::getMagnitudeInDb(float *pfMag, const complex_t *pfSpectrum) const
+{
+    if (!m_bIsInitialized)
+        return kNotInitializedError;
+    
+    // re(0),re(1),re(2),...,re(size/2),im(size/2-1),...,im(1)
+    int iNyq        = m_iFftLength>>1;
+    
+    // no imaginary part at these bins
+    pfMag[0]        = 20*log10(std::abs(pfSpectrum[0]));
+    pfMag[iNyq]     = 20*log10(std::abs(pfSpectrum[iNyq]));
+    
+    for (int i = 1; i < iNyq; i++)
+    {
+        int iImagIdx    = m_iFftLength - i;
+        pfMag[i]        = 20*log10(sqrtf(pfSpectrum[i]*pfSpectrum[i] + pfSpectrum[iImagIdx]*pfSpectrum[iImagIdx]));
+    }
+    return kNoError;
+}
+
 Error_t CFft::getPhase( float *pfPhase, const complex_t *pfSpectrum ) const
 {
     if (!m_bIsInitialized)

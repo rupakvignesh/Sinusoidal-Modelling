@@ -27,23 +27,24 @@ int mod(int a, int b){
 float linInterp(float iploc, float fVal1, float fVal2){
     
     float i1 = iploc - floor(iploc);
-    return (1-i1)*fVal2 + i1*fVal1;
+    return (1-i1)*fVal1 + i1*fVal2;
 }
 
 void applyWindow(float *pfOutputBuffer, const int iNumFrames){
     
-    //Apply triangle
-    for (int i=0; i<iNumFrames/2; i++){
-        pfOutputBuffer[i] *= (float)i/((float)iNumFrames/2);
-    }
-    for (int i=0; i<iNumFrames/2; i++){
-        pfOutputBuffer[iNumFrames-i-1] *= (float)i/((float)iNumFrames/2);
-    }
-    
-    //Apply inverse hamming
-    for (int i=0; i<iNumFrames; i++){
-        pfOutputBuffer[i] /= (0.53836 - 0.46164*cos(2*3.14*i/((float)iNumFrames)));
-    }
+ 
+//    //Apply triangle
+//    for (int i=0; i<iNumFrames/2; i++){
+//        pfOutputBuffer[i] *= (float)i/((float)iNumFrames/2);
+//    }
+//    for (int i=0; i<iNumFrames/2; i++){
+//        pfOutputBuffer[iNumFrames-i-1] *= (float)i/((float)iNumFrames/2);
+//    }
+//    
+//    //Apply inverse hamming
+//    for (int i=0; i<iNumFrames; i++){
+//        pfOutputBuffer[i] /= (0.53836 - 0.46164*cos(2*3.14*i/((float)iNumFrames)));
+//    }
     
 }
 
@@ -105,7 +106,27 @@ Error_t CSinusoid::init(int iBlockSize, int iHopSize, float fSampleRateInHz, flo
     ///////////////////////////////////////////////////////////////////////////////////
     //Creating and initializing Fft
     CFft::createInstance(m_pCFft);
-    m_pCFft->initInstance(m_afParams[kNumFFT],2,CFft::kWindowHamming);
+    m_pCFft->initInstance(m_afParams[kNumFFT],1,CFft::kWindowHamming);
+    m_pfAnWindow = new float [(int) m_afParams[kNumFFT]];
+    m_pfSynWindow = new float [(int) m_afParams[kNumFFT]];
+
+    m_pCFft->getWindow(m_pfAnWindow);
+    float fSum = 0;
+    float fInvSum = 0;
+    for(int i = 0;i<(int) m_afParams[kNumFFT];i++)
+    {
+        fSum += m_pfAnWindow[i];
+        m_pfSynWindow[i] = 1/m_pfAnWindow[i];
+        fInvSum += 1/m_pfSynWindow[i];
+    }
+    for(int i = 0;i<(int) m_afParams[kNumFFT];i++)
+    {
+        m_pfAnWindow[i] /= fSum;
+        m_pfSynWindow[i] *= fInvSum;
+    }
+    m_pCFft->overrideWindow(m_pfAnWindow);
+    
+    
     
     ///////////////////////////////////////////////////////////////////////////////////
     //Initializing private pointers
@@ -146,13 +167,13 @@ Error_t CSinusoid::analyze(float *pfInputBuffer)
 {
     ///////////////////////////////////////////////////////////////////////////////////
     //Initializing variables
-    float *pfMagSpectrum = new float [(int) m_afParams[CSinusoid::kNumFFT] +1];
-    float *pfPhaseSpectrum = new float [(int) m_afParams[CSinusoid::kNumFFT] +1];
-    CFft::complex_t *pfSpectrum = new CFft::complex_t [(int) m_afParams[CSinusoid::kNumFFT] *2];
+    float *pfMagSpectrum = new float [(int) m_afParams[CSinusoid::kNumFFT]/2 +1];
+    float *pfPhaseSpectrum = new float [(int) m_afParams[CSinusoid::kNumFFT]/2 +1];
+    CFft::complex_t *pfSpectrum = new CFft::complex_t [(int) m_afParams[CSinusoid::kNumFFT] ];
     
     //Fft
     m_pCFft->doFft(pfSpectrum, pfInputBuffer);
-    m_pCFft->getMagnitude(pfMagSpectrum, pfSpectrum);
+    m_pCFft->getMagnitudeInDb(pfMagSpectrum, pfSpectrum);
     m_pCFft->getPhase(pfPhaseSpectrum, pfSpectrum);
     
     
@@ -177,14 +198,20 @@ Error_t CSinusoid::synthesize(float *pfOutputBuffer)
     ///////////////////////////////////////////////////////////////////////////////////
     //Ifft
     CFft::complex_t *pfSpectrum = new CFft::complex_t [(int) m_afParams[CSinusoid::kNumFFT] *2];
-//    m_pCFft->mergeRealImag(pfSpectrum, pfReal, pfImag);
-    m_pCFft->mergeRealImag(pfOutputBuffer, pfReal, pfImag);
+    m_pCFft->mergeRealImag(pfSpectrum, pfReal, pfImag);
+//    m_pCFft->mergeRealImag(pfOutputBuffer, pfReal, pfImag);
 
-//    m_pCFft->doInvFft(pfOutputBuffer, pfSpectrum);
-//    ///////////////////////////////////////////////////////////////////////////////////
-//    //Apply inverse window
-//    
-//    applyWindow(pfOutputBuffer, (int) m_afParams[CSinusoid::kNumFFT]);
+    m_pCFft->doInvFft(pfOutputBuffer, pfSpectrum);
+    ///////////////////////////////////////////////////////////////////////////////////
+    //Apply inverse window
+    
+    //applyWindow(pfOutputBuffer, (int) m_afParams[CSinusoid::kNumFFT]);
+    
+    
+    for(int i = 0;i<m_afParams[CSinusoid::kNumFFT];i++)
+    {
+        pfOutputBuffer[i] *= m_pfSynWindow[i];
+    }
     
     return kNoError;
 }
@@ -193,7 +220,7 @@ Error_t CSinusoid::peakDetection(float *pfMagSpectrum)
 {
     int k = 0;
 //    float fMinOfMax = 0;
-    for(int i = 1; i<m_afParams[kNumFFT]-1;i++)
+    for(int i = 1; i< floor(m_afParams[kNumFFT]/2);i++)
     {
         if(pfMagSpectrum[i]>m_afParams[CSinusoid::kAmpThresdB] && pfMagSpectrum[i]>pfMagSpectrum[i-1] && pfMagSpectrum[i]>pfMagSpectrum[i+1])
         {
@@ -217,11 +244,11 @@ Error_t CSinusoid::peakInterp(float *pfMagSpectrum, float *pfPhaseSpectrum)
         fCurrVal = pfMagSpectrum[m_piPeakLoc[i]];
         fLeftVal = pfMagSpectrum[m_piPeakLoc[i]-1];
         fRightVal = pfMagSpectrum[m_piPeakLoc[i]+1];
-        m_pfIpPeakLoc[i] = (m_piPeakLoc[i] + 0.5*(fLeftVal-fRightVal)/(fLeftVal-2*fCurrVal+fRightVal))*m_fSampleRateHz/CSinusoid::kNumFFT;
+        m_pfIpPeakLoc[i] = (m_piPeakLoc[i] + 0.5*(fLeftVal-fRightVal)/(fLeftVal-2*fCurrVal+fRightVal));
         m_pfIpMag[i] = fCurrVal - 0.25*(fLeftVal-fRightVal)*(m_pfIpPeakLoc[i] - m_piPeakLoc[i]);
         
         //to do //Need to do linear interpolation for phase Python code: ipphase = np.interp(iploc, np.arange(0, pX.size), pX)
-        m_pfIpPhase[i] = linInterp(m_pfIpPeakLoc[i], pfPhaseSpectrum[m_piPeakLoc[i]-1], pfPhaseSpectrum[m_piPeakLoc[i]]);
+        m_pfIpPhase[i] = linInterp(m_pfIpPeakLoc[i], pfPhaseSpectrum[(int)(m_pfIpPeakLoc[i])], pfPhaseSpectrum[(int)(m_pfIpPeakLoc[i])+1]);
     }
     
     return kNoError;

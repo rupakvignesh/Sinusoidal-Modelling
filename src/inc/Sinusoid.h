@@ -41,7 +41,11 @@ private:
     float m_afParams[kNumSinusoidParams];
     float m_aafParamRange[kNumSinusoidParams][2];
     int iNumFrames;
+    
     CFft *m_pCFft;
+    float *m_pfAnWindow;
+    float *m_pfSynWindow;
+    
     float *m_pfIpPeakLoc;
     float *m_pfIpMag;
     float *m_pfIpPhase;

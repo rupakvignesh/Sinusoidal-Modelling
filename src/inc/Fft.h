@@ -81,6 +81,13 @@ public:
     \return Error_t
     */
     Error_t getMagnitude (float *pfMag, const complex_t *pfSpectrum) const;
+    
+    //Gets magnitude in dB scaled by the half the fft size
+    Error_t getMagnitudeInDb(float *pfMag, const complex_t *pfSpectrum) const;
+    
+    
+    
+    
     /*! extract phase spectrum from complex values
     \param float * pfPhase: resulting phase spectrum of length (iBlockLength * iZeroPadFactor)/2+1 (\sa initInstance)
     \param const complex_t * pfSpectrum: input spectrum of length iBlockLength * iZeroPadFactor (\sa initInstance)

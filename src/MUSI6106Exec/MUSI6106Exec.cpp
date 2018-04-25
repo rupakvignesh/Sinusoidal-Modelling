@@ -21,12 +21,20 @@ int main(int argc, char* argv[])
         sOutputFilePath;
 
     static const int        kBlockSize = 2048;
+    
+     static const int        kHopSize = 1024;
 
     clock_t                 time = 0;
 
     float                   **ppfAudioData = 0;
     
     float                   **ppfOutputBuffer = 0;
+    
+    float                   *pfInputBuffer = 0;
+    
+    float                   *pfOutputMusic = 0;
+    
+    float                   *pfOldOutput    = 0;
 
     CAudioFileIf            *phAudioFile = 0;
 
@@ -84,38 +92,54 @@ int main(int argc, char* argv[])
     // allocate memory
     ppfAudioData = new float*[stFileSpec.iNumChannels];
     for (int i = 0; i < stFileSpec.iNumChannels; i++)
-        ppfAudioData[i] = new float[kBlockSize];
+        ppfAudioData[i] = new float[kHopSize];
     
     ppfOutputBuffer= new float*[stFileSpec.iNumChannels];
     for (int i = 0; i < stFileSpec.iNumChannels; i++)
         ppfOutputBuffer[i] = new float[kBlockSize];
+    
+    pfInputBuffer = new float [kBlockSize];
+    
+    pfOutputMusic = new float [kHopSize];
+    
+    pfOldOutput = new float [kHopSize];
     
 
     //////////////////////////////////////////////////////////////////////////////
     // Set Sinusoid parameters
     
     CSinusoid::create(pCSinusoid);
-    pCSinusoid->init(kBlockSize, 1024, fSampleRateInHz, 1024, 0, 0, 0, 0);
+    pCSinusoid->init(kBlockSize, kHopSize, fSampleRateInHz, 1024, 0, 0, 0, -80);
     
     time = clock();
     //////////////////////////////////////////////////////////////////////////////
     // get audio data and write it to the output file
     while (!phAudioFile->isEof())
     {
-        long long iNumFrames = kBlockSize;
+        long long iNumFrames = kHopSize;
         phAudioFile->readData(ppfAudioData, iNumFrames);
-        pCSinusoid->analyze(ppfAudioData[0]);
+        for(int i = 0;i<iNumFrames;i++)
+        {
+            pfInputBuffer[i+kHopSize] = ppfAudioData[0][i];
+        }
+        
+        pCSinusoid->analyze(pfInputBuffer);
         pCSinusoid->synthesize(ppfOutputBuffer[0]);
+        
+        for(int i = 0;i<iNumFrames;i++)
+        {
+            pfOutputMusic[i] = ppfOutputBuffer[0][i+kHopSize]+pfOldOutput[i];
+            pfOldOutput[i] = ppfOutputBuffer[0][i];
+            pfInputBuffer[i] = pfInputBuffer[i+kHopSize];
+            
+        }
         pCInstance->writeData(ppfOutputBuffer, iNumFrames);
         cout << "\r" << "reading and writing";
 
         for (int i = 0; i < iNumFrames; i++)
         {
-            for (int c = 0; c < stFileSpec.iNumChannels; c++)
-            {
-                hOutputFile << ppfOutputBuffer[c][i] << "\t";
-            }
-            hOutputFile << endl;
+            
+                hOutputFile << pfOutputMusic[i] << endl;
         }
     }
 
@@ -126,7 +150,17 @@ int main(int argc, char* argv[])
     CAudioFileIf::destroy(phAudioFile);
     CAudioFileIf::destroy(pCInstance);
     CSinusoid::destroy(pCSinusoid);
-
+    for (int i = 0; i < stFileSpec.iNumChannels; i++)
+    {
+        delete [] ppfOutputBuffer[i];
+        delete [] ppfAudioData[i];
+    }
+    
+    delete ppfAudioData;
+    delete ppfOutputBuffer;
+    delete pfInputBuffer;
+    delete pfOldOutput;
+    delete pfOutputMusic;
  
 
 }

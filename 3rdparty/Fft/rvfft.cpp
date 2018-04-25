@@ -790,7 +790,7 @@ for(k=n;k>2;k>>=1){
       }
 
     //division with array length
-   for(i=0;i<n;i++) data[i]/=n;
+//   for(i=0;i<n;i++) data[i]/=n;
 }
 
 

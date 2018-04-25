@@ -177,12 +177,14 @@ Error_t CSinusoid::synthesize(float *pfOutputBuffer)
     ///////////////////////////////////////////////////////////////////////////////////
     //Ifft
     CFft::complex_t *pfSpectrum = new CFft::complex_t [(int) m_afParams[CSinusoid::kNumFFT] *2];
-    m_pCFft->mergeRealImag(pfSpectrum, pfReal, pfImag);
-    m_pCFft->doInvFft(pfOutputBuffer, pfSpectrum);
-    ///////////////////////////////////////////////////////////////////////////////////
-    //Apply inverse window
-    
-    applyWindow(pfOutputBuffer, (int) m_afParams[CSinusoid::kNumFFT]);
+//    m_pCFft->mergeRealImag(pfSpectrum, pfReal, pfImag);
+    m_pCFft->mergeRealImag(pfOutputBuffer, pfReal, pfImag);
+
+//    m_pCFft->doInvFft(pfOutputBuffer, pfSpectrum);
+//    ///////////////////////////////////////////////////////////////////////////////////
+//    //Apply inverse window
+//    
+//    applyWindow(pfOutputBuffer, (int) m_afParams[CSinusoid::kNumFFT]);
     
     return kNoError;
 }
@@ -215,7 +217,7 @@ Error_t CSinusoid::peakInterp(float *pfMagSpectrum, float *pfPhaseSpectrum)
         fCurrVal = pfMagSpectrum[m_piPeakLoc[i]];
         fLeftVal = pfMagSpectrum[m_piPeakLoc[i]-1];
         fRightVal = pfMagSpectrum[m_piPeakLoc[i]+1];
-        m_pfIpPeakLoc[i] = m_piPeakLoc[i] + 0.5*(fLeftVal-fRightVal)*(fLeftVal-2*fCurrVal+fRightVal);
+        m_pfIpPeakLoc[i] = (m_piPeakLoc[i] + 0.5*(fLeftVal-fRightVal)/(fLeftVal-2*fCurrVal+fRightVal))*m_fSampleRateHz/CSinusoid::kNumFFT;
         m_pfIpMag[i] = fCurrVal - 0.25*(fLeftVal-fRightVal)*(m_pfIpPeakLoc[i] - m_piPeakLoc[i]);
         
         //to do //Need to do linear interpolation for phase Python code: ipphase = np.interp(iploc, np.arange(0, pX.size), pX)

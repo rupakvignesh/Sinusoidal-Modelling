@@ -106,27 +106,27 @@ Error_t CSinusoid::init(int iBlockSize, int iHopSize, float fSampleRateInHz, flo
     ///////////////////////////////////////////////////////////////////////////////////
     //Creating and initializing Fft
     CFft::createInstance(m_pCFft);
-    m_pCFft->initInstance(m_afParams[kNumFFT],1,CFft::kWindowHamming);
+    m_pCFft->initInstance(m_afParams[kNumFFT],1,CFft::kWindowHamming,CFft::kNoWindow);
     m_pfAnWindow = new float [(int) m_afParams[kNumFFT]];
     m_pfSynWindow = new float [(int) m_afParams[kNumFFT]];
-
+    
     m_pCFft->getWindow(m_pfAnWindow);
     float fSum = 0;
-    float fInvSum = 0;
     for(int i = 0;i<(int) m_afParams[kNumFFT];i++)
     {
         fSum += m_pfAnWindow[i];
-        m_pfSynWindow[i] = 1/m_pfAnWindow[i];
-        fInvSum += 1/m_pfSynWindow[i];
     }
     for(int i = 0;i<(int) m_afParams[kNumFFT];i++)
     {
         m_pfAnWindow[i] /= fSum;
-        m_pfSynWindow[i] *= fInvSum;
+        m_pfSynWindow[i] = 1/m_pfAnWindow[i];
     }
-    m_pCFft->overrideWindow(m_pfAnWindow);
     
     
+    ////////////////////////////////////////////////////////////////////////////////////
+    //Initialize Ring buffer
+    
+    m_pCRingbuffer = new CRingBuffer<float> ((int)m_afParams[CSinusoid::kNumFFT]);
     
     ///////////////////////////////////////////////////////////////////////////////////
     //Initializing private pointers
@@ -134,6 +134,8 @@ Error_t CSinusoid::init(int iBlockSize, int iHopSize, float fSampleRateInHz, flo
     m_pfIpMag       = new float [(int)m_afParams[CSinusoid::kMaxNSines]];
     m_pfIpPhase     = new float [(int)m_afParams[CSinusoid::kMaxNSines]];
     m_pfIpPeakLoc   = new float [(int)m_afParams[CSinusoid::kMaxNSines]];
+    m_pfIpPeakLocInHz = new float [(int)m_afParams[CSinusoid::kMaxNSines]];
+    m_pfTempBuffer = new float [(int)m_afParams[CSinusoid::kNumFFT]];
 
     
     m_bIsInitialized = true;
@@ -165,6 +167,23 @@ Error_t CSinusoid::reset ()
 
 Error_t CSinusoid::analyze(float *pfInputBuffer)
 {
+    
+    ///////////////////////////////////////////////////////////////////////////////////
+    //Rearranging input for zero phase FFT
+    for(int i = 0;i<(int)m_afParams[CSinusoid::kNumFFT];i++)
+    {
+        m_pfTempBuffer[i] = pfInputBuffer[i]*m_pfAnWindow[i];
+    }
+    m_pCRingbuffer->setWriteIdx((int)m_afParams[CSinusoid::kNumFFT]/2);
+    m_pCRingbuffer->put(m_pfTempBuffer,(int)m_afParams[CSinusoid::kNumFFT]);
+    m_pCRingbuffer->setWriteIdx(0);
+    for(int i = 0;i<(int)m_afParams[CSinusoid::kNumFFT];i++)
+    {
+        m_pfTempBuffer[i] = m_pCRingbuffer->getPostInc();
+    }
+
+    
+    
     ///////////////////////////////////////////////////////////////////////////////////
     //Initializing variables
     float *pfMagSpectrum = new float [(int) m_afParams[CSinusoid::kNumFFT]/2 +1];
@@ -172,9 +191,9 @@ Error_t CSinusoid::analyze(float *pfInputBuffer)
     CFft::complex_t *pfSpectrum = new CFft::complex_t [(int) m_afParams[CSinusoid::kNumFFT] ];
     
     //Fft
-    m_pCFft->doFft(pfSpectrum, pfInputBuffer);
+    m_pCFft->doFft(pfSpectrum, m_pfTempBuffer);
     m_pCFft->getMagnitudeInDb(pfMagSpectrum, pfSpectrum);
-    m_pCFft->getPhase(pfPhaseSpectrum, pfSpectrum);
+    m_pCFft->getUnwrapPhase(pfPhaseSpectrum, pfSpectrum);
     
     
     //Peak detection
@@ -207,10 +226,12 @@ Error_t CSinusoid::synthesize(float *pfOutputBuffer)
     
     //applyWindow(pfOutputBuffer, (int) m_afParams[CSinusoid::kNumFFT]);
     
-    
+    m_pCRingbuffer->setWriteIdx((int)m_afParams[CSinusoid::kNumFFT]/2-1);
+    m_pCRingbuffer->put(pfOutputBuffer,(int) m_afParams[CSinusoid::kNumFFT]);
+    m_pCRingbuffer->setWriteIdx(0);
     for(int i = 0;i<m_afParams[CSinusoid::kNumFFT];i++)
     {
-        pfOutputBuffer[i] *= m_pfSynWindow[i];
+        pfOutputBuffer[i] = m_pCRingbuffer->getPostInc()*m_pfSynWindow[i]/m_afParams[CSinusoid::kNumFFT];
     }
     
     return kNoError;
@@ -251,6 +272,11 @@ Error_t CSinusoid::peakInterp(float *pfMagSpectrum, float *pfPhaseSpectrum)
         m_pfIpPhase[i] = linInterp(m_pfIpPeakLoc[i], pfPhaseSpectrum[(int)(m_pfIpPeakLoc[i])], pfPhaseSpectrum[(int)(m_pfIpPeakLoc[i])+1]);
     }
     
+    //Convert peakloc to Hz
+    for(int i = 0;i<m_iNumPeaksDetected;i++)
+    {
+        m_pfIpPeakLocInHz[i] = m_pfIpPeakLoc[i]*m_fSampleRateHz/(float) m_afParams[CSinusoid::kNumFFT];
+    }
     return kNoError;
 }
 

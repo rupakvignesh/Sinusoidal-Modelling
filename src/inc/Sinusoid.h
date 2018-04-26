@@ -2,8 +2,8 @@
 #define __Sinusoid_hdr__
 
 #include "ErrorDef.h"
+#include "RingBuffer.h"
 class CFft;
-
 class CSinusoid
 {
 public:
@@ -41,16 +41,18 @@ private:
     float m_afParams[kNumSinusoidParams];
     float m_aafParamRange[kNumSinusoidParams][2];
     int iNumFrames;
+    float *m_pfTempBuffer;
     
     CFft *m_pCFft;
     float *m_pfAnWindow;
     float *m_pfSynWindow;
     
     float *m_pfIpPeakLoc;
+    float *m_pfIpPeakLocInHz;
     float *m_pfIpMag;
     float *m_pfIpPhase;
     
-    
+    CRingBuffer<float> *m_pCRingbuffer;
     
     
     Error_t peakDetection(float* pfFFTMag);

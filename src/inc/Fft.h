@@ -94,6 +94,9 @@ public:
     \return Error_t
     */
     Error_t getPhase(float *pfPhase, const complex_t *pfSpectrum) const;
+    
+    Error_t getUnwrapPhase(float *pfPhase, const complex_t *pfSpectrum) const;
+
     /*! get real and imaginary part from complex spectrum
     \param float * pfReal: resulting real part of length (iBlockLength * iZeroPadFactor)/2+1 (\sa initInstance) 
     \param float * pfImag: resulting imaginary part of length (iBlockLength * iZeroPadFactor)/2 (\sa initInstance)

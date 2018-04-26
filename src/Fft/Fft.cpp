@@ -215,6 +215,38 @@ Error_t CFft::getPhase( float *pfPhase, const complex_t *pfSpectrum ) const
     return kNoError;
 }
 
+Error_t CFft::getUnwrapPhase(float *pfPhase, const complex_t *pfSpectrum) const
+{
+    if (!m_bIsInitialized)
+    return kNotInitializedError;
+    
+    // re(0),re(1),re(2),...,re(size/2),im(size/2-1),...,im(1)
+    int iNyq        = m_iFftLength>>1;
+    
+    pfPhase[0]      = m_Pi;
+    pfPhase[iNyq]   = m_Pi;
+    
+    for (int i = 1; i < iNyq; i++)
+    {
+        int iImagIdx    = m_iFftLength - i;
+        if (pfSpectrum[i] == .0F && pfSpectrum[iImagIdx] != .0F)
+        pfPhase[i]   = m_Pi2;
+        else
+        pfPhase[i]   = atan2f (pfSpectrum[iImagIdx], pfSpectrum[i]);
+        
+        while(pfPhase[i] - pfPhase[i-1]>= m_Pi)
+        {
+            pfPhase[i] -= 2*m_Pi;
+        }
+        
+        while(pfPhase[i] - pfPhase[i-1]<= -m_Pi)
+        {
+            pfPhase[i] += 2*m_Pi;
+        }
+    }
+    return kNoError;
+}
+
 Error_t CFft::splitRealImag( float *pfReal, float *pfImag, const complex_t *pfSpectrum ) const
 {
     if (!m_bIsInitialized)

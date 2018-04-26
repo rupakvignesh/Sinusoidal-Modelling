@@ -128,15 +128,15 @@ int main(int argc, char* argv[])
         
         for(int i = 0;i<iNumFrames;i++)
         {
-            pfOutputMusic[i] = ppfOutputBuffer[0][i+kHopSize]+pfOldOutput[i];
-            pfOldOutput[i] = ppfOutputBuffer[0][i];
+            pfOutputMusic[i] = ppfOutputBuffer[0][i]+pfOldOutput[i];
+            pfOldOutput[i] = ppfOutputBuffer[0][i+kHopSize];
             pfInputBuffer[i] = pfInputBuffer[i+kHopSize];
             
         }
         pCInstance->writeData(ppfOutputBuffer, iNumFrames);
         cout << "\r" << "reading and writing";
 
-        for (int i = 0; i < iNumFrames; i++)
+        for (int i = 0; i < kHopSize; i++)
         {
             
                 hOutputFile << pfOutputMusic[i] << endl;

@@ -6,7 +6,7 @@
 #include "Vector.h"
 #include "Fft.h"
 
-#include "rvfft.h"
+#include <rvfft.h>
 
 const float CFft::m_Pi  = static_cast<float>(M_PI);
 const float CFft::m_Pi2 = static_cast<float>(M_PI_2);

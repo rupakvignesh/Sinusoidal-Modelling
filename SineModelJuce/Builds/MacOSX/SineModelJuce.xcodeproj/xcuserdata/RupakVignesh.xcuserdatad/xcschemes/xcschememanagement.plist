@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>SchemeUserState</key>
+	<dict>
+		<key>SineModelJuce - AU.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>2</integer>
+		</dict>
+		<key>SineModelJuce - All.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>0</integer>
+		</dict>
+		<key>SineModelJuce - Shared Code.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>4</integer>
+		</dict>
+		<key>SineModelJuce - Standalone Plugin.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>3</integer>
+		</dict>
+		<key>SineModelJuce - VST.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>1</integer>
+		</dict>
+	</dict>
+	<key>SuppressBuildableAutocreation</key>
+	<dict>
+		<key>1FF65706541B519CA309CD09</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>7B277727BA791A2CEB7F54A9</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>B93465235CEFF808790C762C</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>BF17B20E110F4371D502C38D</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>FDFEB71910AD6FF66AF431FC</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+	</dict>
+</dict>
+</plist>

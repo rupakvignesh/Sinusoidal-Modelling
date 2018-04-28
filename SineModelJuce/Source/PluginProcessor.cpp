@@ -179,10 +179,14 @@ void NewProjectAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
             output[channel][i] = m_pfOutputBuffer[i] + m_pfOldBuffer[i];
             m_pfOldBuffer[i] = m_pfOutputBuffer[i+buffer.getNumSamples()];
             m_pfInputBuffer[i] = m_pfInputBuffer[i+buffer.getNumSamples()];
-            cout<<output[channel][i]<<endl;
+            cout<<output[channel][i]<<" "<<input[channel][i]<<" "<< channelData[i]<<endl;
         }
 
     }
+}
+void NewProjectAudioProcessor::setSinusoidParameter (CSinusoid::SinusoidParam_t eParam, float fParamValue)
+{
+    m_pCSin->setParam(eParam, fParamValue);
 }
 
 //==============================================================================

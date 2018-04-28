@@ -17,7 +17,7 @@
 //==============================================================================
 /**
 */
-class NewProjectAudioProcessorEditor  : public AudioProcessorEditor
+class NewProjectAudioProcessorEditor  : public AudioProcessorEditor, public Slider::Listener
 {
 public:
     NewProjectAudioProcessorEditor (NewProjectAudioProcessor&);
@@ -31,6 +31,8 @@ private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     NewProjectAudioProcessor& processor;
+    void sliderValueChanged(Slider *slider);
 
+     Slider frequencySlider, widthSlider;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (NewProjectAudioProcessorEditor)
 };

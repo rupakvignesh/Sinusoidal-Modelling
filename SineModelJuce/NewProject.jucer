@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT name="SineModelJuce" projectType="audioplug" buildStandalone="1"
-              jucerVersion="5.2.1" headerPath="/Users/RupakVignesh/Desktop/spring18/Sinusoidal-Modelling/src/inc">
+              jucerVersion="5.2.1" headerPath="/Users/Anachronite/Documents/GitHub/Sinusoidal-Modelling/src/inc">
   <MAINGROUP id="MEetdx" name="SineModelJuce">
     <GROUP id="{A5458F48-E712-439C-288A-174FCCA3A2C0}" name="Source">
+      <FILE id="crTX7B" name="Fft.cpp" compile="1" resource="0" file="../src/Fft/Fft.cpp"/>
+      <FILE id="hOTGTT" name="Sinusoid.cpp" compile="1" resource="0" file="../src/Sinusoid/Sinusoid.cpp"/>
       <FILE id="Hj7Bw7" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
       <FILE id="aeWzDW" name="PluginProcessor.h" compile="0" resource="0"
@@ -11,8 +13,6 @@
       <FILE id="MK042f" name="PluginEditor.cpp" compile="1" resource="0"
             file="Source/PluginEditor.cpp"/>
       <FILE id="hoyuuV" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
-      <FILE id="QqPVTP" name="Sinusoid.cpp" compile="1" resource="0" file="Source/Sinusoid.cpp"/>
-      <FILE id="tNGVzo" name="Fft.cpp" compile="1" resource="0" file="../src/Fft/Fft.cpp"/>
       <FILE id="ZV5iO5" name="utilFunctions.c" compile="1" resource="0" file="../src/UtilsFunction_C/utilFunctions.c"/>
       <FILE id="tbDGg0" name="rvfft.cpp" compile="1" resource="0" file="../3rdparty/Fft/rvfft.cpp"/>
     </GROUP>
@@ -24,21 +24,21 @@
         <CONFIGURATION isDebug="0" name="Release"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
-        <MODULEPATH id="juce_core" path="../../../../Documents/JUCE-master/modules"/>
-        <MODULEPATH id="juce_events" path="../../../../Documents/JUCE-master/modules"/>
-        <MODULEPATH id="juce_graphics" path="../../../../Documents/JUCE-master/modules"/>
-        <MODULEPATH id="juce_data_structures" path="../../../../Documents/JUCE-master/modules"/>
-        <MODULEPATH id="juce_gui_basics" path="../../../../Documents/JUCE-master/modules"/>
-        <MODULEPATH id="juce_gui_extra" path="../../../../Documents/JUCE-master/modules"/>
-        <MODULEPATH id="juce_cryptography" path="../../../../Documents/JUCE-master/modules"/>
-        <MODULEPATH id="juce_video" path="../../../../Documents/JUCE-master/modules"/>
-        <MODULEPATH id="juce_opengl" path="../../../../Documents/JUCE-master/modules"/>
-        <MODULEPATH id="juce_audio_basics" path="../../../../Documents/JUCE-master/modules"/>
-        <MODULEPATH id="juce_audio_devices" path="../../../../Documents/JUCE-master/modules"/>
-        <MODULEPATH id="juce_audio_formats" path="../../../../Documents/JUCE-master/modules"/>
-        <MODULEPATH id="juce_audio_processors" path="../../../../Documents/JUCE-master/modules"/>
-        <MODULEPATH id="juce_audio_plugin_client" path="../../../../Documents/JUCE-master/modules"/>
-        <MODULEPATH id="juce_audio_utils" path="../../../../Documents/JUCE-master/modules"/>
+        <MODULEPATH id="juce_core" path="../../MUS6106/JUCE/JUCE/modules"/>
+        <MODULEPATH id="juce_events" path="../../MUS6106/JUCE/JUCE/modules"/>
+        <MODULEPATH id="juce_graphics" path="../../MUS6106/JUCE/JUCE/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../../MUS6106/JUCE/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../../MUS6106/JUCE/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../../MUS6106/JUCE/JUCE/modules"/>
+        <MODULEPATH id="juce_cryptography" path="../../MUS6106/JUCE/JUCE/modules"/>
+        <MODULEPATH id="juce_video" path="../../MUS6106/JUCE/JUCE/modules"/>
+        <MODULEPATH id="juce_opengl" path="../../MUS6106/JUCE/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_basics" path="../../MUS6106/JUCE/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="../../MUS6106/JUCE/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../../MUS6106/JUCE/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="../../MUS6106/JUCE/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_plugin_client" path="../../MUS6106/JUCE/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="../../MUS6106/JUCE/JUCE/modules"/>
       </MODULEPATHS>
     </XCODE_MAC>
   </EXPORTFORMATS>

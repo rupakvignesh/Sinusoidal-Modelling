@@ -182,14 +182,25 @@ Error_t CFft::getMagnitudeInDb(float *pfMag, const complex_t *pfSpectrum) const
     int iNyq        = m_iFftLength>>1;
     
     // no imaginary part at these bins
+    if(pfMag[0]<1e-5)
+    pfMag[0] = 1e-5;
+    
+    if(pfMag[iNyq]<1e-5)
+    pfMag[iNyq] = 1e-5;
+    
     pfMag[0]        = 20*log10(std::abs(pfSpectrum[0]));
     pfMag[iNyq]     = 20*log10(std::abs(pfSpectrum[iNyq]));
     
     for (int i = 1; i < iNyq; i++)
     {
         int iImagIdx    = m_iFftLength - i;
-        pfMag[i]        = 20*log10(sqrtf(pfSpectrum[i]*pfSpectrum[i] + pfSpectrum[iImagIdx]*pfSpectrum[iImagIdx]));
+        pfMag[i]        = (sqrtf(pfSpectrum[i]*pfSpectrum[i] + pfSpectrum[iImagIdx]*pfSpectrum[iImagIdx]));
+        if(pfMag[i]<1e-5)
+        pfMag[i] = 1e-5;
+        
+        pfMag[i] = 20*log10(pfMag[i]);
     }
+
     return kNoError;
 }
 

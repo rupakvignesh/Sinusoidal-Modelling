@@ -3,7 +3,7 @@
 
 #include "ErrorDef.h"
 #include "RingBuffer.h"
-class CFft;
+#include "Fft.h"
 class CSinusoid
 {
 public:
@@ -51,6 +51,11 @@ private:
     float *m_pfIpPeakLocInHz;
     float *m_pfIpMag;
     float *m_pfIpPhase;
+    float *m_pfMagSpectrum;
+    float *m_pfPhaseSpectrum;
+    float *m_pfReal;
+    float *m_pfImag;
+    CFft::complex_t *m_pfSpectrum;
     
     CRingBuffer<float> *m_pCRingbuffer;
     

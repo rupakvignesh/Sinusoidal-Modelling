@@ -136,7 +136,11 @@ Error_t CSinusoid::init(int iBlockSize, int iHopSize, float fSampleRateInHz, flo
     m_pfIpPeakLoc   = new float [(int)m_afParams[CSinusoid::kMaxNSines]];
     m_pfIpPeakLocInHz = new float [(int)m_afParams[CSinusoid::kMaxNSines]];
     m_pfTempBuffer = new float [(int)m_afParams[CSinusoid::kNumFFT]];
-
+    m_pfMagSpectrum = new float [(int) m_afParams[CSinusoid::kNumFFT]/2 +1];
+    m_pfPhaseSpectrum = new float [(int) m_afParams[CSinusoid::kNumFFT]/2 +1];
+    m_pfSpectrum = new CFft::complex_t [(int) m_afParams[CSinusoid::kNumFFT]];
+    m_pfReal = new float [(int) m_afParams[CSinusoid::kNumFFT]];
+    m_pfImag = new float [(int) m_afParams[CSinusoid::kNumFFT]];
     
     m_bIsInitialized = true;
     
@@ -160,6 +164,12 @@ Error_t CSinusoid::reset ()
     delete m_pfIpPeakLoc;
     delete m_pfIpPhase;
     delete m_pfIpMag;
+    delete m_pfMagSpectrum;
+    delete m_pfPhaseSpectrum;
+    delete m_pfSpectrum;
+    delete m_pfReal;
+    delete m_pfImag;
+    delete m_pfTempBuffer;
     
     return kNoError;
     
@@ -182,25 +192,27 @@ Error_t CSinusoid::analyze(float *pfInputBuffer)
         m_pfTempBuffer[i] = m_pCRingbuffer->getPostInc();
     }
 
-    
-    
-    ///////////////////////////////////////////////////////////////////////////////////
-    //Initializing variables
-    float *pfMagSpectrum = new float [(int) m_afParams[CSinusoid::kNumFFT]/2 +1];
-    float *pfPhaseSpectrum = new float [(int) m_afParams[CSinusoid::kNumFFT]/2 +1];
-    CFft::complex_t *pfSpectrum = new CFft::complex_t [(int) m_afParams[CSinusoid::kNumFFT] ];
+    for(int i=0; i<(int)m_afParams[CSinusoid::kNumFFT]/2+1;i++){
+        m_pfMagSpectrum[i] = 0;
+        m_pfPhaseSpectrum[i] = 0;
+    }
+    for(int i=0; i<(int)m_afParams[CSinusoid::kNumFFT];i++){
+        m_pfSpectrum[i] = 0;
+        m_pfReal[i] = 0;
+        m_pfImag[i] = 0;
+    }
     
     //Fft
-    m_pCFft->doFft(pfSpectrum, m_pfTempBuffer);
-    m_pCFft->getMagnitudeInDb(pfMagSpectrum, pfSpectrum);
-    m_pCFft->getUnwrapPhase(pfPhaseSpectrum, pfSpectrum);
+    m_pCFft->doFft(m_pfSpectrum, m_pfTempBuffer);
+    m_pCFft->getMagnitudeInDb(m_pfMagSpectrum, m_pfSpectrum);
+    m_pCFft->getUnwrapPhase(m_pfPhaseSpectrum, m_pfSpectrum);
     
     
     //Peak detection
-    peakDetection(pfMagSpectrum);
+    peakDetection(m_pfMagSpectrum);
     
     //Peak interpolation
-    peakInterp(pfMagSpectrum, pfPhaseSpectrum);
+    peakInterp(m_pfMagSpectrum, m_pfPhaseSpectrum);
     
     return kNoError;
     
@@ -210,17 +222,13 @@ Error_t CSinusoid::synthesize(float *pfOutputBuffer)
 {
     ///////////////////////////////////////////////////////////////////////////////////
     //Generate sine waves in frequency domain
-    float *pfReal = new float [(int) m_afParams[CSinusoid::kNumFFT] +1];
-    float *pfImag = new float [(int) m_afParams[CSinusoid::kNumFFT] +1];
-    genspecsines_C(m_pfIpPeakLoc, m_pfIpMag, m_pfIpPhase, m_iNumPeaksDetected, pfReal, pfImag, (int)m_afParams[CSinusoid::kNumFFT]);
+    genspecsines_C(m_pfIpPeakLoc, m_pfIpMag, m_pfIpPhase, m_iNumPeaksDetected, m_pfReal, m_pfImag, (int)m_afParams[CSinusoid::kNumFFT]);
     
     ///////////////////////////////////////////////////////////////////////////////////
     //Ifft
-    CFft::complex_t *pfSpectrum = new CFft::complex_t [(int) m_afParams[CSinusoid::kNumFFT] *2];
-    m_pCFft->mergeRealImag(pfSpectrum, pfReal, pfImag);
-//    m_pCFft->mergeRealImag(pfOutputBuffer, pfReal, pfImag);
+    m_pCFft->mergeRealImag(m_pfSpectrum, m_pfReal, m_pfImag);
 
-    m_pCFft->doInvFft(pfOutputBuffer, pfSpectrum);
+    m_pCFft->doInvFft(pfOutputBuffer, m_pfSpectrum);
     ///////////////////////////////////////////////////////////////////////////////////
     //Apply inverse window
     
@@ -247,6 +255,10 @@ Error_t CSinusoid::peakDetection(float *pfMagSpectrum)
         {
             m_piPeakLoc[k] = i;
             k++;
+            if(k == (int) m_afParams[CSinusoid::kMaxNSines])
+            {
+                break;
+            }
         }
     }
     m_iNumPeaksDetected = k;

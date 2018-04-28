@@ -154,9 +154,9 @@ void NewProjectAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
     // This is here to avoid people getting screaming feedback
     // when they first compile a plugin, but obviously you don't need to keep
     // this code if your algorithm always overwrites all the output channels.
-    int blockSize = buffer.getNumSamples();
+    
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, blockSize);
+        buffer.clear (i, 0, buffer.getNumSamples());
 
     // This is the place where you'd normally do the guts of your plugin's
     // audio processing...
@@ -169,19 +169,19 @@ void NewProjectAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
         auto* channelData = buffer.getWritePointer (channel);
         auto **input = (float **)buffer.getArrayOfReadPointers();
         auto **output = buffer.getArrayOfWritePointers();
-        for(int i=0; i<blockSize; i++){
-            m_pfInputBuffer[blockSize+i] = input[channel][i];
+        for(int i=0; i<buffer.getNumSamples(); i++){
+            m_pfInputBuffer[buffer.getNumSamples()+i] = input[channel][i];
         }
         m_pCSin->analyze(m_pfInputBuffer);
         m_pCSin->synthesize(m_pfOutputBuffer);
-
-        
-        for(int i=0; i<blockSize; i++){
+       
+        for(int i=0; i<buffer.getNumSamples(); i++){
             output[channel][i] = m_pfOutputBuffer[i] + m_pfOldBuffer[i];
-            m_pfOldBuffer[i] = m_pfOutputBuffer[i+blockSize];
-            m_pfInputBuffer[i] = m_pfInputBuffer[i+blockSize];
+            m_pfOldBuffer[i] = m_pfOutputBuffer[i+buffer.getNumSamples()];
+            m_pfInputBuffer[i] = m_pfInputBuffer[i+buffer.getNumSamples()];
             cout<<output[channel][i]<<endl;
         }
+
     }
 }
 

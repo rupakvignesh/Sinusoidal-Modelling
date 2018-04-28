@@ -181,14 +181,12 @@ Error_t CSinusoid::analyze(float *pfInputBuffer)
     {
         m_pfTempBuffer[i] = m_pCRingbuffer->getPostInc();
     }
-
-    
     
     ///////////////////////////////////////////////////////////////////////////////////
     //Initializing variables
-    float *pfMagSpectrum = new float [(int) m_afParams[CSinusoid::kNumFFT]/2 +1];
-    float *pfPhaseSpectrum = new float [(int) m_afParams[CSinusoid::kNumFFT]/2 +1];
-    CFft::complex_t *pfSpectrum = new CFft::complex_t [(int) m_afParams[CSinusoid::kNumFFT] ];
+    float *pfMagSpectrum = new float [(int) m_afParams[CSinusoid::kNumFFT]/2 +1]();
+    float *pfPhaseSpectrum = new float [(int) m_afParams[CSinusoid::kNumFFT]/2 +1]();
+    CFft::complex_t *pfSpectrum = new CFft::complex_t [(int) m_afParams[CSinusoid::kNumFFT]]();
     
     //Fft
     m_pCFft->doFft(pfSpectrum, m_pfTempBuffer);

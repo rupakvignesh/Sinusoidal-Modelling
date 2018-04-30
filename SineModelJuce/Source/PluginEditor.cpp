@@ -20,7 +20,11 @@ NewProjectAudioProcessorEditor::NewProjectAudioProcessorEditor (NewProjectAudioP
     // editor's size to whatever you need it to be.
     setSize (300, 400);
     
+    frequencySliderAttach = new AudioProcessorValueTreeState::SliderAttachment(processor.parameters, "frequencySliderID", frequencySlider);
 
+    widthSliderAttach = new AudioProcessorValueTreeState::SliderAttachment(processor.parameters, "widthSliderID", widthSlider);
+
+    SineSliderAttach = new AudioProcessorValueTreeState::SliderAttachment(processor.parameters, "SineSliderID", SineSlider);
     
     frequencySlider.setSliderStyle(Slider::SliderStyle::Rotary);
     frequencySlider.setTextBoxStyle(Slider::TextBoxBelow, true, 100, 25);
@@ -89,11 +93,6 @@ void NewProjectAudioProcessorEditor::sliderValueChanged(Slider *slider)
     {
         processor.setSinusoidParameter(CSinusoid::kMaxNSines, (float)slider->getValue());
     }
-    //
-//    if(slider == &widthSlider)
-//    {
-//        processor.setVibratoParameter(CVibrato::kParamModWidthInS, (float)slider->getValue());
-//        processor.fModWidth = (float)slider->getValue();
-//    }
+
     
 }

@@ -24,10 +24,20 @@ NewProjectAudioProcessor::NewProjectAudioProcessor()
                        .withOutput ("Output", AudioChannelSet::stereo(), false)
                      #endif
                        ),
-                        m_pCSin(0)
+                        m_pCSin(0), parameters(*this, nullptr)
 #endif
 {
     CSinusoid::create(m_pCSin);
+    NormalisableRange<float> frequencyRange(-100.0f, 0.0f);
+    parameters.createAndAddParameter("frequencySliderID", "frequencySlider", "frequencySlider", frequencyRange, -80.0f, nullptr, nullptr);
+    
+    NormalisableRange<float> widthRange(0.01f, 5.0f);
+    parameters.createAndAddParameter("widthSliderID", "widthSlider", "widthSlider", widthRange, 1.0, nullptr, nullptr);
+    
+    NormalisableRange<float> SineRange(1, 512, 1);
+    parameters.createAndAddParameter("SineSliderID", "SineSlider", "SineSlider", SineRange, 512, nullptr, nullptr);
+    
+    parameters.state = ValueTree("savedParams");
 }
 
 NewProjectAudioProcessor::~NewProjectAudioProcessor()
@@ -164,25 +174,7 @@ void NewProjectAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
     // the samples and the outer loop is handling the channels.
     // Alternatively, you can process the samples with the channels
     // interleaved by keeping the same state.
-//   
-//    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-//    {
-//        auto* channelData = buffer.getWritePointer (channel);
-//        auto **input = (float **)buffer.getArrayOfReadPointers();
-//        auto **output = buffer.getArrayOfWritePointers();
-//        for(int i=0; i<buffer.getNumSamples(); i++){
-//            m_pfInputBuffer[buffer.getNumSamples()+i] = input[channel][i];
-//        }
-//        m_pCSin->analyze(m_pfInputBuffer);
-//        m_pCSin->synthesize(m_pfOutputBuffer);
-//       
-//        for(int i=0; i<buffer.getNumSamples(); i++){
-//            output[channel][i] = m_pfOutputBuffer[i] + m_pfOldBuffer[i];
-//            m_pfOldBuffer[i] = m_pfOutputBuffer[i+buffer.getNumSamples()];
-//            m_pfInputBuffer[i] = m_pfInputBuffer[i+buffer.getNumSamples()];
-//        }
-//
-//    }
+
     auto* channelData = buffer.getWritePointer(0);
     int iNumFrames = buffer.getNumSamples();
     
@@ -224,12 +216,23 @@ void NewProjectAudioProcessor::getStateInformation (MemoryBlock& destData)
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
+    ScopedPointer<XmlElement> xml (parameters.state.createXml());
+    copyXmlToBinary(*xml, destData);
 }
 
 void NewProjectAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
+    ScopedPointer<XmlElement> savedParameters (getXmlFromBinary(data, sizeInBytes));
+    
+    if(savedParameters != nullptr)
+    {
+        if(savedParameters->hasTagName(parameters.state.getType()))
+        {
+            parameters.state = ValueTree::fromXml(*savedParameters);
+        }
+    }
 }
 
 //==============================================================================

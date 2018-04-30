@@ -157,7 +157,6 @@ Error_t CSinusoid::init(int iBlockSize, int iHopSize, float fSampleRateInHz, flo
     m_pfIpPhase     = new float [(int) m_afParams[CSinusoid::kNumFFT]/2 +1];
     m_pfIpPeakLoc   = new float [(int) m_afParams[CSinusoid::kNumFFT]/2 +1];
     
-    m_pfIpPeakLocInHz = new float [(int) m_afParams[CSinusoid::kNumFFT]/2 +1];
     
     m_pfTempBuffer = new float [(int)m_afParams[CSinusoid::kNumFFT]];
     
@@ -188,21 +187,32 @@ Error_t CSinusoid::reset ()
     //Deleting 
     CFft::destroyInstance(m_pCFft);
     
+    //Delete Ring buffer
+    delete m_pCRingbuffer;
+    
     ///////////////////////////////////////////////////////////////////////////////////
     //Deletingprivate pointers
     delete m_piPeakLoc;
+    
     delete m_pfIpPeakLoc;
     delete m_pfIpPhase;
     delete m_pfIpMag;
+    
     delete m_pfMagSpectrum;
     delete m_pfPhaseSpectrum;
     delete m_pfSpectrum;
+    
     delete m_pfReal;
     delete m_pfImag;
+    
     delete m_pfTempBuffer;
+    
     delete m_pfFinalPhase;
     delete m_pfFinalMag;
     delete m_pfFinalLoc;
+    
+    delete m_pfAnWindow;
+    delete m_pfSynWindow;
     
     return kNoError;
     
@@ -313,9 +323,10 @@ Error_t CSinusoid::peakInterp(float *pfMagSpectrum, float *pfPhaseSpectrum)
         m_pfIpMag[i] = fCurrVal - 0.25*(fLeftVal-fRightVal)*(m_pfIpPeakLoc[i] - (float)m_piPeakLoc[i]);
         
         //to do //Need to do linear interpolation for phase Python code: ipphase = np.interp(iploc, np.arange(0, pX.size), pX)
-        m_pfIpPhase[i] = linInterp(m_pfIpPeakLoc[i], pfPhaseSpectrum[(int)(m_pfIpPeakLoc[i])], pfPhaseSpectrum[(int)(m_pfIpPeakLoc[i])+1]);
         m_pfIpPeakLoc[i] *= m_afParams[CSinusoid::kMultFactor];
 
+        m_pfIpPhase[i] = linInterp(m_pfIpPeakLoc[i], pfPhaseSpectrum[(int)(m_pfIpPeakLoc[i])], pfPhaseSpectrum[(int)(m_pfIpPeakLoc[i])+1]);
+        
     }
     //Pick k largest peaks
     if(m_iNumPeaksDetected>= m_afParams[CSinusoid::kMaxNSines])

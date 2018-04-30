@@ -34,9 +34,9 @@ NewProjectAudioProcessorEditor::NewProjectAudioProcessorEditor (NewProjectAudioP
     widthSlider.addListener(this);
     addAndMakeVisible(widthSlider);
     
-    SineSlider.setSliderStyle(Slider::SliderStyle::Rotary);
+    SineSlider.setSliderStyle(Slider::SliderStyle::IncDecButtons);
     SineSlider.setTextBoxStyle(Slider::TextBoxBelow, true, 100, 25);
-    SineSlider.setRange(1,512);
+    SineSlider.setRange(1,512,1);
     SineSlider.addListener(this);
     addAndMakeVisible(SineSlider);
     
@@ -62,7 +62,7 @@ void NewProjectAudioProcessorEditor::paint (Graphics& g)
     g.setFont (15.0f);
     g.drawFittedText ("Threshold (dB)", 30, 170, 100, 25, Justification::centred, 1);
     g.drawFittedText ("Pitch shift", 170, 170, 100, 25, Justification::centred, 1);
-    g.drawFittedText("Num Sines", 30,340, 100, 25, Justification::centred, 1);
+    g.drawFittedText("Num Sines", 100,340, 100, 25, Justification::centred, 1);
 }
 
 void NewProjectAudioProcessorEditor::resized()
@@ -71,7 +71,7 @@ void NewProjectAudioProcessorEditor::resized()
     // subcomponents in your editor..
     frequencySlider.setBounds(-20,20,200,150);
     widthSlider.setBounds(120,20,200,150);
-    SineSlider.setBounds(-20, 190, 200, 150);
+    SineSlider.setBounds(50, 190, 200, 150);
 }
 
 void NewProjectAudioProcessorEditor::sliderValueChanged(Slider *slider)

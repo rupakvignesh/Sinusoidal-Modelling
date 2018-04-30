@@ -13,6 +13,7 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "Sinusoid.h"
 #include "ErrorDef.h"
+#include "Synthesis.h"
 
 //==============================================================================
 /**
@@ -63,5 +64,6 @@ private:
     float* m_pfInputBuffer;
     float* m_pfOutputBuffer;
     float* m_pfOldBuffer;
+    float* m_pfTestSine;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (NewProjectAudioProcessor)
 };

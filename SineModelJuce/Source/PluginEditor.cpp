@@ -18,7 +18,7 @@ NewProjectAudioProcessorEditor::NewProjectAudioProcessorEditor (NewProjectAudioP
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (300, 200);
+    setSize (300, 400);
     
 
     
@@ -30,9 +30,17 @@ NewProjectAudioProcessorEditor::NewProjectAudioProcessorEditor (NewProjectAudioP
     
     widthSlider.setSliderStyle(Slider::SliderStyle::Rotary);
     widthSlider.setTextBoxStyle(Slider::TextBoxBelow, true, 100, 25);
-    widthSlider.setRange(0.001, 0.02);
+    widthSlider.setRange(0.01,5);
     widthSlider.addListener(this);
     addAndMakeVisible(widthSlider);
+    
+    SineSlider.setSliderStyle(Slider::SliderStyle::Rotary);
+    SineSlider.setTextBoxStyle(Slider::TextBoxBelow, true, 100, 25);
+    SineSlider.setRange(1,512);
+    SineSlider.addListener(this);
+    addAndMakeVisible(SineSlider);
+    
+    
     
    
 }
@@ -41,6 +49,7 @@ NewProjectAudioProcessorEditor::~NewProjectAudioProcessorEditor()
 {
     widthSlider.removeListener(this);
     frequencySlider.removeListener(this);
+    SineSlider.removeListener(this);
 }
 
 //==============================================================================
@@ -52,7 +61,8 @@ void NewProjectAudioProcessorEditor::paint (Graphics& g)
     g.setColour (Colours::white);
     g.setFont (15.0f);
     g.drawFittedText ("Threshold (dB)", 30, 170, 100, 25, Justification::centred, 1);
-    g.drawFittedText ("Number of Sines", 170, 170, 100, 25, Justification::centred, 1);
+    g.drawFittedText ("Pitch shift", 170, 170, 100, 25, Justification::centred, 1);
+    g.drawFittedText("Num Sines", 30,340, 100, 25, Justification::centred, 1);
 }
 
 void NewProjectAudioProcessorEditor::resized()
@@ -61,6 +71,7 @@ void NewProjectAudioProcessorEditor::resized()
     // subcomponents in your editor..
     frequencySlider.setBounds(-20,20,200,150);
     widthSlider.setBounds(120,20,200,150);
+    SineSlider.setBounds(-20, 190, 200, 150);
 }
 
 void NewProjectAudioProcessorEditor::sliderValueChanged(Slider *slider)
@@ -69,7 +80,16 @@ void NewProjectAudioProcessorEditor::sliderValueChanged(Slider *slider)
     {
     processor.setSinusoidParameter(CSinusoid::kAmpThresdB, (float)slider->getValue());
     }
-//
+    
+    if(slider == &widthSlider)
+    {
+        processor.setSinusoidParameter(CSinusoid::kMultFactor, (float)slider->getValue());
+    }
+    if(slider == &SineSlider)
+    {
+        processor.setSinusoidParameter(CSinusoid::kMaxNSines, (float)slider->getValue());
+    }
+    //
 //    if(slider == &widthSlider)
 //    {
 //        processor.setVibratoParameter(CVibrato::kParamModWidthInS, (float)slider->getValue());

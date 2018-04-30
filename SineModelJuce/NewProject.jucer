@@ -4,8 +4,8 @@
               jucerVersion="5.2.1" headerPath="/Users/Anachronite/Documents/GitHub/Sinusoidal-Modelling/src/inc">
   <MAINGROUP id="MEetdx" name="SineModelJuce">
     <GROUP id="{A5458F48-E712-439C-288A-174FCCA3A2C0}" name="Source">
+      <FILE id="NVvnVl" name="Sinusoid.cpp" compile="1" resource="0" file="../src/Sinusoid/Sinusoid.cpp"/>
       <FILE id="crTX7B" name="Fft.cpp" compile="1" resource="0" file="../src/Fft/Fft.cpp"/>
-      <FILE id="hOTGTT" name="Sinusoid.cpp" compile="1" resource="0" file="../src/Sinusoid/Sinusoid.cpp"/>
       <FILE id="Hj7Bw7" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
       <FILE id="aeWzDW" name="PluginProcessor.h" compile="0" resource="0"

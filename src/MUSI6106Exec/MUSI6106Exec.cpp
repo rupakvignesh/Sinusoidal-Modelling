@@ -109,7 +109,7 @@ int main(int argc, char* argv[])
     // Set Sinusoid parameters
     
     CSinusoid::create(pCSinusoid);
-    pCSinusoid->init(kBlockSize, kHopSize, fSampleRateInHz, 1024, 0, 0, 0, -80);
+    pCSinusoid->init(kBlockSize, kHopSize, fSampleRateInHz, kHopSize, 1, -80);
     
     time = clock();
     //////////////////////////////////////////////////////////////////////////////

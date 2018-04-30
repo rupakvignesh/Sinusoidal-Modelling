@@ -12,16 +12,14 @@ public:
         kNumFFT,
         kHopSize,
         kMaxNSines,
-        kMinSinDur,
-        kFreqDevOffset,
-        kFreqDevSlope,
-        kAmpThresdB, 
+        kAmpThresdB,
+        kMultFactor,
         
         kNumSinusoidParams
     };
     static Error_t create(CSinusoid *& pCSinusoid);
     static Error_t destroy(CSinusoid *& pCSinusoid);
-    Error_t init( int iBlockSize, int iHopSize, float fSampleRateInHz, float fMaxNSines, float fMinSinDur, float fFreqDevOffset, float fFreqDevSlope, float fAmpThresdB);
+    Error_t init( int iBlockSize, int iHopSize, float fSampleRateInHz, float fMaxNSines, float fMultFactor, float fAmpThresdB);
     Error_t reset();
     Error_t setParam(SinusoidParam_t eParam, float fParamValue);
     float   getParam(SinusoidParam_t eParam) const;
@@ -55,6 +53,10 @@ private:
     float *m_pfPhaseSpectrum;
     float *m_pfReal;
     float *m_pfImag;
+    
+    float *m_pfFinalMag;
+    float *m_pfFinalLoc;
+    float *m_pfFinalPhase;
     CFft::complex_t *m_pfSpectrum;
     
     CRingBuffer<float> *m_pCRingbuffer;

@@ -19,6 +19,41 @@ extern "C"
 #endif
 
 
+///////////////////////////////////////////////////////////////////////////////////
+//Detecting k largest peaks
+struct vi
+{
+    float value;int index;
+};
+
+int compare(const void *a,const void *b)
+{
+    struct vi *a1 = (struct vi *)a;
+    struct vi *a2 = (struct vi*)b;
+    if((*a1).value>(*a2).value)return -1;
+    else if((*a1).value<(*a2).value)return 1;
+    else return 0;
+}
+
+void pickKLargest(float* pfMag,float *pfPeakLoc, float *pfPhase, float *temp1, float *temp2, float *temp3, int N, int k){
+    
+    struct vi objects [N];
+    for(int i=0; i<N; i++){
+        objects[i].value=temp1[i];
+        objects[i].index=i;
+    }
+    
+    qsort(objects, N, sizeof(objects[0]), compare);
+    
+    for (int i=0; i<k; i++){
+        pfMag[i] = objects[i].value;
+        pfPeakLoc[i] = temp2[objects[i].index];
+        pfPhase[i] = temp3[objects[i].index];
+    }
+}
+
+
+
 int mod(int a, int b){
     int c = a%b;
     return (c<0) ? c + b : c;
@@ -32,19 +67,7 @@ float linInterp(float iploc, float fVal1, float fVal2){
 
 void applyWindow(float *pfOutputBuffer, const int iNumFrames){
     
- 
-//    //Apply triangle
-//    for (int i=0; i<iNumFrames/2; i++){
-//        pfOutputBuffer[i] *= (float)i/((float)iNumFrames/2);
-//    }
-//    for (int i=0; i<iNumFrames/2; i++){
-//        pfOutputBuffer[iNumFrames-i-1] *= (float)i/((float)iNumFrames/2);
-//    }
-//    
-//    //Apply inverse hamming
-//    for (int i=0; i<iNumFrames; i++){
-//        pfOutputBuffer[i] /= (0.53836 - 0.46164*cos(2*3.14*i/((float)iNumFrames)));
-//    }
+
     
 }
 
@@ -69,7 +92,7 @@ Error_t CSinusoid::destroy(CSinusoid *&pCSinusoid)
 }
 
 
-Error_t CSinusoid::init(int iBlockSize, int iHopSize, float fSampleRateInHz, float fMaxNSines, float fMinSinDur, float fFreqDevOffset, float fFreqDevSlope, float fAmpThresdB)
+Error_t CSinusoid::init(int iBlockSize, int iHopSize, float fSampleRateInHz, float fMaxNSines, float fMultFactor, float fAmpThresdB)
 {
     
     if(m_bIsInitialized)
@@ -98,10 +121,8 @@ Error_t CSinusoid::init(int iBlockSize, int iHopSize, float fSampleRateInHz, flo
     setParam(CSinusoid::kNumFFT, iBlockSize);
     setParam(CSinusoid::kHopSize, iHopSize);
     setParam(CSinusoid::kMaxNSines, fMaxNSines);
-    setParam(CSinusoid::kFreqDevSlope, fFreqDevSlope);
-    setParam(CSinusoid::kFreqDevOffset, fFreqDevOffset);
     setParam(CSinusoid::kAmpThresdB, fAmpThresdB);
-    setParam(CSinusoid::kMinSinDur, fMinSinDur);
+    setParam(CSinusoid::kMultFactor, fMultFactor);
     
     ///////////////////////////////////////////////////////////////////////////////////
     //Creating and initializing Fft
@@ -130,17 +151,26 @@ Error_t CSinusoid::init(int iBlockSize, int iHopSize, float fSampleRateInHz, flo
     
     ///////////////////////////////////////////////////////////////////////////////////
     //Initializing private pointers
-    m_piPeakLoc     = new int   [(int)m_afParams[CSinusoid::kMaxNSines]];
-    m_pfIpMag       = new float [(int)m_afParams[CSinusoid::kMaxNSines]];
-    m_pfIpPhase     = new float [(int)m_afParams[CSinusoid::kMaxNSines]];
-    m_pfIpPeakLoc   = new float [(int)m_afParams[CSinusoid::kMaxNSines]];
-    m_pfIpPeakLocInHz = new float [(int)m_afParams[CSinusoid::kMaxNSines]];
+    m_piPeakLoc     = new int   [(int) m_afParams[CSinusoid::kNumFFT]/2 +1];
+    
+    m_pfIpMag       = new float [(int) m_afParams[CSinusoid::kNumFFT]/2 +1];
+    m_pfIpPhase     = new float [(int) m_afParams[CSinusoid::kNumFFT]/2 +1];
+    m_pfIpPeakLoc   = new float [(int) m_afParams[CSinusoid::kNumFFT]/2 +1];
+    
+    m_pfIpPeakLocInHz = new float [(int) m_afParams[CSinusoid::kNumFFT]/2 +1];
+    
     m_pfTempBuffer = new float [(int)m_afParams[CSinusoid::kNumFFT]];
+    
     m_pfMagSpectrum = new float [(int) m_afParams[CSinusoid::kNumFFT]/2 +1];
     m_pfPhaseSpectrum = new float [(int) m_afParams[CSinusoid::kNumFFT]/2 +1];
     m_pfSpectrum = new CFft::complex_t [(int) m_afParams[CSinusoid::kNumFFT]];
+    
     m_pfReal = new float [(int) m_afParams[CSinusoid::kNumFFT]];
     m_pfImag = new float [(int) m_afParams[CSinusoid::kNumFFT]];
+    
+    m_pfFinalLoc = new float [(int) m_afParams[CSinusoid::kMaxNSines]];
+    m_pfFinalMag = new float [(int) m_afParams[CSinusoid::kMaxNSines]];
+    m_pfFinalPhase = new float [(int) m_afParams[CSinusoid::kMaxNSines]];
     
     m_bIsInitialized = true;
     
@@ -170,6 +200,9 @@ Error_t CSinusoid::reset ()
     delete m_pfReal;
     delete m_pfImag;
     delete m_pfTempBuffer;
+    delete m_pfFinalPhase;
+    delete m_pfFinalMag;
+    delete m_pfFinalLoc;
     
     return kNoError;
     
@@ -222,7 +255,7 @@ Error_t CSinusoid::synthesize(float *pfOutputBuffer)
 {
     ///////////////////////////////////////////////////////////////////////////////////
     //Generate sine waves in frequency domain
-    genspecsines_C(m_pfIpPeakLoc, m_pfIpMag, m_pfIpPhase, m_iNumPeaksDetected, m_pfReal, m_pfImag, (int)m_afParams[CSinusoid::kNumFFT]);
+    genspecsines_C(m_pfFinalLoc, m_pfFinalMag, m_pfFinalPhase, m_iNumPeaksDetected, m_pfReal, m_pfImag, (int)m_afParams[CSinusoid::kNumFFT]);
     
     ///////////////////////////////////////////////////////////////////////////////////
     //Ifft
@@ -255,13 +288,12 @@ Error_t CSinusoid::peakDetection(float *pfMagSpectrum)
         {
             m_piPeakLoc[k] = i;
             k++;
-            if(k == (int) m_afParams[CSinusoid::kMaxNSines])
-            {
-                break;
-            }
         }
     }
     m_iNumPeaksDetected = k;
+    
+    
+    
     return kNoError;
     
 }
@@ -278,18 +310,30 @@ Error_t CSinusoid::peakInterp(float *pfMagSpectrum, float *pfPhaseSpectrum)
         fLeftVal = pfMagSpectrum[m_piPeakLoc[i]-1];
         fRightVal = pfMagSpectrum[m_piPeakLoc[i]+1];
         m_pfIpPeakLoc[i] = (m_piPeakLoc[i] + 0.5*(fLeftVal-fRightVal)/(fLeftVal-2*fCurrVal+fRightVal));
-        m_pfIpMag[i] = fCurrVal - 0.25*(fLeftVal-fRightVal)*(m_pfIpPeakLoc[i] - m_piPeakLoc[i]);
+        m_pfIpMag[i] = fCurrVal - 0.25*(fLeftVal-fRightVal)*(m_pfIpPeakLoc[i] - (float)m_piPeakLoc[i]);
         
         //to do //Need to do linear interpolation for phase Python code: ipphase = np.interp(iploc, np.arange(0, pX.size), pX)
         m_pfIpPhase[i] = linInterp(m_pfIpPeakLoc[i], pfPhaseSpectrum[(int)(m_pfIpPeakLoc[i])], pfPhaseSpectrum[(int)(m_pfIpPeakLoc[i])+1]);
+        m_pfIpPeakLoc[i] *= m_afParams[CSinusoid::kMultFactor];
+
     }
-    
-    //Convert peakloc to Hz
-    for(int i = 0;i<m_iNumPeaksDetected;i++)
+    //Pick k largest peaks
+    if(m_iNumPeaksDetected>= m_afParams[CSinusoid::kMaxNSines])
     {
-        m_pfIpPeakLocInHz[i] = m_pfIpPeakLoc[i]*m_fSampleRateHz/(float) m_afParams[CSinusoid::kNumFFT];
+        pickKLargest(m_pfFinalMag,m_pfFinalLoc,m_pfFinalPhase,m_pfIpMag,m_pfIpPeakLoc,m_pfIpPhase, m_iNumPeaksDetected, (int)m_afParams[CSinusoid::kMaxNSines]);
+        m_iNumPeaksDetected = (int)m_afParams[CSinusoid::kMaxNSines];
     }
-    return kNoError;
+    else
+    {
+        for(int i = 0;i<m_iNumPeaksDetected;i++)
+        {
+            m_pfFinalMag[i] = m_pfIpMag[i];
+            m_pfFinalLoc[i] = m_pfIpPeakLoc[i];
+            m_pfFinalPhase[i] = m_pfIpPhase[i];
+        }
+    }
+   
+        return kNoError;
 }
 
 Error_t CSinusoid::setParam(CSinusoid::SinusoidParam_t eParam, float fParamValue)

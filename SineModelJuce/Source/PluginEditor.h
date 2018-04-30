@@ -33,6 +33,6 @@ private:
     NewProjectAudioProcessor& processor;
     void sliderValueChanged(Slider *slider);
 
-     Slider frequencySlider, widthSlider;
+     Slider frequencySlider, widthSlider, SineSlider;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (NewProjectAudioProcessorEditor)
 };

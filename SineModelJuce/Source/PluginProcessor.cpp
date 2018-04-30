@@ -21,7 +21,7 @@ NewProjectAudioProcessor::NewProjectAudioProcessor()
                       #if ! JucePlugin_IsSynth
                        .withInput  ("Input",  AudioChannelSet::stereo(), true)
                       #endif
-                       .withOutput ("Output", AudioChannelSet::stereo(), true)
+                       .withOutput ("Output", AudioChannelSet::stereo(), false)
                      #endif
                        ),
                         m_pCSin(0)
@@ -106,10 +106,11 @@ void NewProjectAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
-    m_pCSin->init(2*samplesPerBlock, samplesPerBlock, sampleRate, samplesPerBlock, 0, 0, 0, -80);
+    m_pCSin->init(2*samplesPerBlock, samplesPerBlock, sampleRate, samplesPerBlock, 1, -80);
     m_pfInputBuffer = new float [2*samplesPerBlock]();
     m_pfOutputBuffer = new float [2*samplesPerBlock]();
     m_pfOldBuffer = new float [samplesPerBlock]();
+    m_pfTestSine = new float [10000];
 }
 
 void NewProjectAudioProcessor::releaseResources()
@@ -154,7 +155,6 @@ void NewProjectAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
     // This is here to avoid people getting screaming feedback
     // when they first compile a plugin, but obviously you don't need to keep
     // this code if your algorithm always overwrites all the output channels.
-    
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
@@ -164,24 +164,42 @@ void NewProjectAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
     // the samples and the outer loop is handling the channels.
     // Alternatively, you can process the samples with the channels
     // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
+//   
+//    for (int channel = 0; channel < totalNumInputChannels; ++channel)
+//    {
+//        auto* channelData = buffer.getWritePointer (channel);
+//        auto **input = (float **)buffer.getArrayOfReadPointers();
+//        auto **output = buffer.getArrayOfWritePointers();
+//        for(int i=0; i<buffer.getNumSamples(); i++){
+//            m_pfInputBuffer[buffer.getNumSamples()+i] = input[channel][i];
+//        }
+//        m_pCSin->analyze(m_pfInputBuffer);
+//        m_pCSin->synthesize(m_pfOutputBuffer);
+//       
+//        for(int i=0; i<buffer.getNumSamples(); i++){
+//            output[channel][i] = m_pfOutputBuffer[i] + m_pfOldBuffer[i];
+//            m_pfOldBuffer[i] = m_pfOutputBuffer[i+buffer.getNumSamples()];
+//            m_pfInputBuffer[i] = m_pfInputBuffer[i+buffer.getNumSamples()];
+//        }
+//
+//    }
+    auto* channelData = buffer.getWritePointer(0);
+    int iNumFrames = buffer.getNumSamples();
+    
+    for(int i = 0;i<iNumFrames;i++)
     {
-        auto* channelData = buffer.getWritePointer (channel);
-        auto **input = (float **)buffer.getArrayOfReadPointers();
-        auto **output = buffer.getArrayOfWritePointers();
-        for(int i=0; i<buffer.getNumSamples(); i++){
-            m_pfInputBuffer[buffer.getNumSamples()+i] = input[channel][i];
-        }
-        m_pCSin->analyze(m_pfInputBuffer);
-        m_pCSin->synthesize(m_pfOutputBuffer);
-       
-        for(int i=0; i<buffer.getNumSamples(); i++){
-            output[channel][i] = m_pfOutputBuffer[i] + m_pfOldBuffer[i];
-            m_pfOldBuffer[i] = m_pfOutputBuffer[i+buffer.getNumSamples()];
-            m_pfInputBuffer[i] = m_pfInputBuffer[i+buffer.getNumSamples()];
-            cout<<output[channel][i]<<" "<<input[channel][i]<<" "<< channelData[i]<<endl;
-        }
-
+        m_pfInputBuffer[i+iNumFrames] = channelData[i];
+    }
+    
+    m_pCSin->analyze(m_pfInputBuffer);
+    m_pCSin->synthesize(m_pfOutputBuffer);
+    
+    for(int i = 0;i<iNumFrames;i++)
+    {
+        channelData[i] = m_pfOutputBuffer[i]+m_pfOldBuffer[i];
+        m_pfOldBuffer[i] = m_pfOutputBuffer[i+iNumFrames];
+        m_pfInputBuffer[i] = m_pfInputBuffer[i+iNumFrames];
+        cout<<channelData[i]<<endl;
     }
 }
 void NewProjectAudioProcessor::setSinusoidParameter (CSinusoid::SinusoidParam_t eParam, float fParamValue)

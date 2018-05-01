@@ -34,7 +34,7 @@ NewProjectAudioProcessorEditor::NewProjectAudioProcessorEditor (NewProjectAudioP
     
     widthSlider.setSliderStyle(Slider::SliderStyle::Rotary);
     widthSlider.setTextBoxStyle(Slider::TextBoxBelow, true, 100, 25);
-    widthSlider.setRange(0.01,5);
+    widthSlider.setRange(-2000,2000);
     widthSlider.addListener(this);
     addAndMakeVisible(widthSlider);
     
@@ -65,7 +65,7 @@ void NewProjectAudioProcessorEditor::paint (Graphics& g)
     g.setColour (Colours::white);
     g.setFont (15.0f);
     g.drawFittedText ("Threshold (dB)", 30, 170, 100, 25, Justification::centred, 1);
-    g.drawFittedText ("Pitch shift", 170, 170, 100, 25, Justification::centred, 1);
+    g.drawFittedText ("Pitch shift (cents)", 170, 170, 100, 25, Justification::centred, 1);
     g.drawFittedText("Num Sines", 100,340, 100, 25, Justification::centred, 1);
 }
 
@@ -87,7 +87,7 @@ void NewProjectAudioProcessorEditor::sliderValueChanged(Slider *slider)
     
     if(slider == &widthSlider)
     {
-        processor.setSinusoidParameter(CSinusoid::kMultFactor, (float)slider->getValue());
+        processor.setSinusoidParameter(CSinusoid::kMultFactor, pow(2.0, ((float)slider->getValue())/1200) );
     }
     if(slider == &SineSlider)
     {

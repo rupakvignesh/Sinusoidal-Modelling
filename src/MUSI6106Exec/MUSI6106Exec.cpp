@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
 
     static const int        kBlockSize = 2048;
     
-     static const int        kHopSize = 1024;
+     static const int        kHopSize = 512;
 
     clock_t                 time = 0;
 
@@ -102,14 +102,14 @@ int main(int argc, char* argv[])
     
     pfOutputMusic = new float [kHopSize];
     
-    pfOldOutput = new float [kHopSize];
+    pfOldOutput = new float [kBlockSize-kHopSize];
     
 
     //////////////////////////////////////////////////////////////////////////////
     // Set Sinusoid parameters
     
     CSinusoid::create(pCSinusoid);
-    pCSinusoid->init(kBlockSize, kHopSize, fSampleRateInHz, kHopSize, 1, -80);
+    pCSinusoid->init(kBlockSize, kHopSize, fSampleRateInHz, kBlockSize/2, 1, -80);
     
     time = clock();
     //////////////////////////////////////////////////////////////////////////////
@@ -120,7 +120,7 @@ int main(int argc, char* argv[])
         phAudioFile->readData(ppfAudioData, iNumFrames);
         for(int i = 0;i<iNumFrames;i++)
         {
-            pfInputBuffer[i+kHopSize] = ppfAudioData[0][i];
+            pfInputBuffer[kBlockSize+i-kHopSize] = ppfAudioData[0][i];
         }
         
         pCSinusoid->analyze(pfInputBuffer);
@@ -129,9 +129,30 @@ int main(int argc, char* argv[])
         for(int i = 0;i<iNumFrames;i++)
         {
             pfOutputMusic[i] = ppfOutputBuffer[0][i]+pfOldOutput[i];
-            pfOldOutput[i] = ppfOutputBuffer[0][i+kHopSize];
-            pfInputBuffer[i] = pfInputBuffer[i+kHopSize];
-            
+            if(kHopSize<kBlockSize/2)
+            {
+                pfOldOutput[i] = ppfOutputBuffer[0][i+kHopSize]+pfOldOutput[i+kHopSize];
+            }
+            else
+            {
+                pfOldOutput[i] = ppfOutputBuffer[0][i+kHopSize];
+            }
+
+        }
+        for(int i = iNumFrames;i<kBlockSize-kHopSize;i++)
+        {
+            if(i<kBlockSize-2*kHopSize)
+            {
+                pfOldOutput[i] = ppfOutputBuffer[0][i+kHopSize]+pfOldOutput[i+kHopSize];
+            }
+            else
+            {
+                pfOldOutput[i] = ppfOutputBuffer[0][i+kHopSize];
+            }
+        }
+        for(int i = iNumFrames;i<kBlockSize;i++)
+        {
+            pfInputBuffer[i-iNumFrames] = pfInputBuffer[i];
         }
         pCInstance->writeData(ppfOutputBuffer, iNumFrames);
         cout << "\r" << "reading and writing";

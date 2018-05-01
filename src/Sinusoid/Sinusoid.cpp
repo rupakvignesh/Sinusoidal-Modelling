@@ -52,8 +52,6 @@ void pickKLargest(float* pfMag,float *pfPeakLoc, float *pfPhase, float *temp1, f
     }
 }
 
-
-
 int mod(int a, int b){
     int c = a%b;
     return (c<0) ? c + b : c;
@@ -63,12 +61,6 @@ float linInterp(float iploc, float fVal1, float fVal2){
     
     float i1 = iploc - floor(iploc);
     return (1-i1)*fVal1 + i1*fVal2;
-}
-
-void applyWindow(float *pfOutputBuffer, const int iNumFrames){
-    
-
-    
 }
 
 Error_t CSinusoid::create(CSinusoid *&pCSinusoid)
@@ -222,14 +214,18 @@ Error_t CSinusoid::analyze(float *pfInputBuffer)
 {
     
     ///////////////////////////////////////////////////////////////////////////////////
-    //Rearranging input for zero phase FFT
+    //Applying Analysis Window
     for(int i = 0;i<(int)m_afParams[CSinusoid::kNumFFT];i++)
     {
         m_pfTempBuffer[i] = pfInputBuffer[i]*m_pfAnWindow[i];
     }
+    
+    ///////////////////////////////////////////////////////////////////////////////////
+    //Rearranging input for zero phase FFT
     m_pCRingbuffer->setWriteIdx((int)m_afParams[CSinusoid::kNumFFT]/2);
     m_pCRingbuffer->put(m_pfTempBuffer,(int)m_afParams[CSinusoid::kNumFFT]);
     m_pCRingbuffer->setWriteIdx(0);
+    
     for(int i = 0;i<(int)m_afParams[CSinusoid::kNumFFT];i++)
     {
         m_pfTempBuffer[i] = m_pCRingbuffer->getPostInc();
@@ -239,6 +235,8 @@ Error_t CSinusoid::analyze(float *pfInputBuffer)
         m_pfMagSpectrum[i] = 0;
         m_pfPhaseSpectrum[i] = 0;
     }
+    ///////////////////////////////////////////////////////////////////////////////////
+    //Reset private members
     for(int i=0; i<(int)m_afParams[CSinusoid::kNumFFT];i++){
         m_pfSpectrum[i] = 0;
         m_pfReal[i] = 0;
@@ -274,9 +272,6 @@ Error_t CSinusoid::synthesize(float *pfOutputBuffer)
     m_pCFft->doInvFft(pfOutputBuffer, m_pfSpectrum);
     ///////////////////////////////////////////////////////////////////////////////////
     //Apply inverse window
-    
-    //applyWindow(pfOutputBuffer, (int) m_afParams[CSinusoid::kNumFFT]);
-    
     m_pCRingbuffer->setWriteIdx((int)m_afParams[CSinusoid::kNumFFT]/2-1);
     m_pCRingbuffer->put(pfOutputBuffer,(int) m_afParams[CSinusoid::kNumFFT]);
     m_pCRingbuffer->setWriteIdx(0);
@@ -291,7 +286,6 @@ Error_t CSinusoid::synthesize(float *pfOutputBuffer)
 Error_t CSinusoid::peakDetection(float *pfMagSpectrum)
 {
     int k = 0;
-//    float fMinOfMax = 0;
     for(int i = 1; i< floor(m_afParams[kNumFFT]/2);i++)
     {
         if(pfMagSpectrum[i]>m_afParams[CSinusoid::kAmpThresdB] && pfMagSpectrum[i]>pfMagSpectrum[i-1] && pfMagSpectrum[i]>pfMagSpectrum[i+1])
@@ -301,8 +295,6 @@ Error_t CSinusoid::peakDetection(float *pfMagSpectrum)
         }
     }
     m_iNumPeaksDetected = k;
-    
-    
     
     return kNoError;
     
@@ -319,15 +311,13 @@ Error_t CSinusoid::peakInterp(float *pfMagSpectrum, float *pfPhaseSpectrum)
         fCurrVal = pfMagSpectrum[m_piPeakLoc[i]];
         fLeftVal = pfMagSpectrum[m_piPeakLoc[i]-1];
         fRightVal = pfMagSpectrum[m_piPeakLoc[i]+1];
+        
         m_pfIpPeakLoc[i] = (m_piPeakLoc[i] + 0.5*(fLeftVal-fRightVal)/(fLeftVal-2*fCurrVal+fRightVal));
         m_pfIpMag[i] = fCurrVal - 0.25*(fLeftVal-fRightVal)*(m_pfIpPeakLoc[i] - (float)m_piPeakLoc[i]);
-        
-        //to do //Need to do linear interpolation for phase Python code: ipphase = np.interp(iploc, np.arange(0, pX.size), pX)
-        m_pfIpPeakLoc[i] *= m_afParams[CSinusoid::kMultFactor];
-
+        m_pfIpPeakLoc[i] *= m_afParams[CSinusoid::kMultFactor]; // Apply Frequency shifting
         m_pfIpPhase[i] = linInterp(m_pfIpPeakLoc[i], pfPhaseSpectrum[(int)(m_pfIpPeakLoc[i])], pfPhaseSpectrum[(int)(m_pfIpPeakLoc[i])+1]);
-        
     }
+    
     //Pick k largest peaks
     if(m_iNumPeaksDetected>= m_afParams[CSinusoid::kMaxNSines])
     {
@@ -344,7 +334,7 @@ Error_t CSinusoid::peakInterp(float *pfMagSpectrum, float *pfPhaseSpectrum)
         }
     }
    
-        return kNoError;
+    return kNoError;
 }
 
 Error_t CSinusoid::setParam(CSinusoid::SinusoidParam_t eParam, float fParamValue)

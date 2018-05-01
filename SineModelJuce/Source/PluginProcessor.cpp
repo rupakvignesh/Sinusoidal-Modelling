@@ -116,11 +116,11 @@ void NewProjectAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
-    m_pCSin->init(2*samplesPerBlock, samplesPerBlock, sampleRate, samplesPerBlock, 1, -80);
-    m_pfInputBuffer = new float [2*samplesPerBlock]();
-    m_pfOutputBuffer = new float [2*samplesPerBlock]();
-    m_pfOldBuffer = new float [samplesPerBlock]();
-    m_pfTestSine = new float [10000];
+    int iProcessBlockSize = max(2*samplesPerBlock,2048);
+    m_pCSin->init(iProcessBlockSize, samplesPerBlock, sampleRate, iProcessBlockSize/2, 1, -80);
+    m_pfInputBuffer = new float [iProcessBlockSize]();
+    m_pfOutputBuffer = new float [iProcessBlockSize]();
+    m_pfOldBuffer = new float [iProcessBlockSize-samplesPerBlock]();
 }
 
 void NewProjectAudioProcessor::releaseResources()
@@ -175,24 +175,62 @@ void NewProjectAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
     // Alternatively, you can process the samples with the channels
     // interleaved by keeping the same state.
 
-    auto* channelData = buffer.getWritePointer(0);
+    auto* channelData1 = buffer.getWritePointer(0);
+    auto* channelData2 = buffer.getWritePointer(1);
     int iNumFrames = buffer.getNumSamples();
+    int iProcessBlockSize = max(2*iNumFrames,2048);
     
+//    for(int i = 0;i<iNumFrames;i++)
+//    {
+//        m_pfInputBuffer[i+iNumFrames] = channelData1[i]+channelData2[i];
+//    }
     for(int i = 0;i<iNumFrames;i++)
     {
-        m_pfInputBuffer[i+iNumFrames] = channelData[i];
+        m_pfInputBuffer[iProcessBlockSize+i-iNumFrames] = (channelData1[i]+channelData2[i])/2;
     }
     
     m_pCSin->analyze(m_pfInputBuffer);
     m_pCSin->synthesize(m_pfOutputBuffer);
     
+//    for(int i = 0;i<iNumFrames;i++)
+//    {
+//        channelData1[i] = m_pfOutputBuffer[i]+m_pfOldBuffer[i];
+//        channelData2[i] = channelData1[i];
+//        m_pfOldBuffer[i] = m_pfOutputBuffer[i+iNumFrames];
+//        m_pfInputBuffer[i] = m_pfInputBuffer[i+iNumFrames];
+//    }
+    
+    
     for(int i = 0;i<iNumFrames;i++)
     {
-        channelData[i] = m_pfOutputBuffer[i]+m_pfOldBuffer[i];
-        m_pfOldBuffer[i] = m_pfOutputBuffer[i+iNumFrames];
-        m_pfInputBuffer[i] = m_pfInputBuffer[i+iNumFrames];
-        cout<<channelData[i]<<endl;
+        channelData1[i] = m_pfOutputBuffer[i]+m_pfOldBuffer[i];
+        channelData2[i] = channelData1[i];
+        if(iNumFrames<iProcessBlockSize/2)
+        {
+            m_pfOldBuffer[i] = m_pfOutputBuffer[i+iNumFrames]+m_pfOldBuffer[i+iNumFrames];
+        }
+        else
+        {
+            m_pfOldBuffer[i] = m_pfOutputBuffer[i+iNumFrames];
+        }
+        
     }
+    for(int i = iNumFrames;i<iProcessBlockSize-iNumFrames;i++)
+    {
+        if(i<iProcessBlockSize-2*iNumFrames)
+        {
+            m_pfOldBuffer[i] = m_pfOutputBuffer[i+iNumFrames]+m_pfOldBuffer[i+iNumFrames];
+        }
+        else
+        {
+            m_pfOldBuffer[i] = m_pfOutputBuffer[i+iNumFrames];
+        }
+    }
+    for(int i = iNumFrames;i<iProcessBlockSize;i++)
+    {
+        m_pfInputBuffer[i-iNumFrames] = m_pfInputBuffer[i];
+    }
+
 }
 void NewProjectAudioProcessor::setSinusoidParameter (CSinusoid::SinusoidParam_t eParam, float fParamValue)
 {

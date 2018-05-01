@@ -20,23 +20,23 @@ NewProjectAudioProcessorEditor::NewProjectAudioProcessorEditor (NewProjectAudioP
     // editor's size to whatever you need it to be.
     setSize (300, 400);
     
-    frequencySliderAttach = new AudioProcessorValueTreeState::SliderAttachment(processor.parameters, "frequencySliderID", frequencySlider);
+    thresholdSliderAttach = new AudioProcessorValueTreeState::SliderAttachment(processor.parameters, "thresholdSliderID", thresholdSlider);
 
-    widthSliderAttach = new AudioProcessorValueTreeState::SliderAttachment(processor.parameters, "widthSliderID", widthSlider);
+    pitchSliderAttach = new AudioProcessorValueTreeState::SliderAttachment(processor.parameters, "pitchSliderID", pitchSlider);
 
     SineSliderAttach = new AudioProcessorValueTreeState::SliderAttachment(processor.parameters, "SineSliderID", SineSlider);
     
-    frequencySlider.setSliderStyle(Slider::SliderStyle::Rotary);
-    frequencySlider.setTextBoxStyle(Slider::TextBoxBelow, true, 100, 25);
-    frequencySlider.setRange(-100, 0);
-    frequencySlider.addListener(this);
-    addAndMakeVisible(frequencySlider);
+    thresholdSlider.setSliderStyle(Slider::SliderStyle::Rotary);
+    thresholdSlider.setTextBoxStyle(Slider::TextBoxBelow, true, 100, 25);
+    thresholdSlider.setRange(-100, 0);
+    thresholdSlider.addListener(this);
+    addAndMakeVisible(thresholdSlider);
     
-    widthSlider.setSliderStyle(Slider::SliderStyle::Rotary);
-    widthSlider.setTextBoxStyle(Slider::TextBoxBelow, true, 100, 25);
-    widthSlider.setRange(-2000,2000);
-    widthSlider.addListener(this);
-    addAndMakeVisible(widthSlider);
+    pitchSlider.setSliderStyle(Slider::SliderStyle::Rotary);
+    pitchSlider.setTextBoxStyle(Slider::TextBoxBelow, true, 100, 25);
+    pitchSlider.setRange(-1200,1200,6);
+    pitchSlider.addListener(this);
+    addAndMakeVisible(pitchSlider);
     
     SineSlider.setSliderStyle(Slider::SliderStyle::IncDecButtons);
     SineSlider.setTextBoxStyle(Slider::TextBoxBelow, true, 100, 25);
@@ -51,8 +51,8 @@ NewProjectAudioProcessorEditor::NewProjectAudioProcessorEditor (NewProjectAudioP
 
 NewProjectAudioProcessorEditor::~NewProjectAudioProcessorEditor()
 {
-    widthSlider.removeListener(this);
-    frequencySlider.removeListener(this);
+    pitchSlider.removeListener(this);
+    thresholdSlider.removeListener(this);
     SineSlider.removeListener(this);
 }
 
@@ -73,19 +73,19 @@ void NewProjectAudioProcessorEditor::resized()
 {
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
-    frequencySlider.setBounds(-20,20,200,150);
-    widthSlider.setBounds(120,20,200,150);
+    thresholdSlider.setBounds(-20,20,200,150);
+    pitchSlider.setBounds(120,20,200,150);
     SineSlider.setBounds(50, 190, 200, 150);
 }
 
 void NewProjectAudioProcessorEditor::sliderValueChanged(Slider *slider)
 {
-    if(slider == &frequencySlider)
+    if(slider == &thresholdSlider)
     {
     processor.setSinusoidParameter(CSinusoid::kAmpThresdB, (float)slider->getValue());
     }
     
-    if(slider == &widthSlider)
+    if(slider == &pitchSlider)
     {
         processor.setSinusoidParameter(CSinusoid::kMultFactor, pow(2.0, ((float)slider->getValue())/1200) );
     }

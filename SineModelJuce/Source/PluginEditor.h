@@ -33,9 +33,9 @@ private:
     // access the processor object that created it.
     NewProjectAudioProcessor& processor;
 
-     Slider frequencySlider, widthSlider, SineSlider;
-    ScopedPointer <AudioProcessorValueTreeState::SliderAttachment> frequencySliderAttach;
-    ScopedPointer <AudioProcessorValueTreeState::SliderAttachment> widthSliderAttach;
+     Slider thresholdSlider, pitchSlider, SineSlider;
+    ScopedPointer <AudioProcessorValueTreeState::SliderAttachment> thresholdSliderAttach;
+    ScopedPointer <AudioProcessorValueTreeState::SliderAttachment> pitchSliderAttach;
     ScopedPointer <AudioProcessorValueTreeState::SliderAttachment> SineSliderAttach;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (NewProjectAudioProcessorEditor)

@@ -9,6 +9,7 @@ Sinusoidal modelling is a technique used to approximate a signal, in audio it is
 ## Steps to build
 * Open the Jucer (SineModelJuce/NewProject.jucer).
 * Set the header search path to /Sinusoidal-Modelling/src/inc (absolute path from root directory).
+* Add Sinudoid.cpp, Fft.cpp, utilFunctions.c and rvfft.cpp to the JUCE Source folder (click on + and add existing files)
 * Set JUCE Modules path.
 * Click the "Save and open in IDE" button in JUCER.
 

@@ -95,18 +95,6 @@ Error_t CSinusoid::init(int iBlockSize, int iHopSize, float fSampleRateInHz, flo
     ///////////////////////////////////////////////////////////////////////////////////
     //Setting sample rate
     m_fSampleRateHz = fSampleRateInHz;
-
-    ///////////////////////////////////////////////////////////////////////////////////
-    //Setting parameter ranges
-    m_aafParamRange[CSinusoid::kNumFFT][0] = 0;
-    m_aafParamRange[CSinusoid::kNumFFT][1] = 4096;
-    
-    m_aafParamRange[CSinusoid::kHopSize][0] = 0;
-    m_aafParamRange[CSinusoid::kHopSize][0] = iBlockSize;
-    
-    m_aafParamRange[CSinusoid::kMaxNSines][0] = 0;
-    m_aafParamRange[CSinusoid::kMaxNSines][1] = 300;
-    
     
     ///////////////////////////////////////////////////////////////////////////////////
     //Setting parameter values

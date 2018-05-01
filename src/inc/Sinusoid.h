@@ -33,11 +33,9 @@ public:
     
     
 private:
-    bool m_isInParamRange (SinusoidParam_t eParam, float fParamValue);
     bool m_bIsInitialized;
     float m_fSampleRateHz;
     float m_afParams[kNumSinusoidParams];
-    float m_aafParamRange[kNumSinusoidParams][2];
     int iNumFrames;
     float *m_pfTempBuffer;
     

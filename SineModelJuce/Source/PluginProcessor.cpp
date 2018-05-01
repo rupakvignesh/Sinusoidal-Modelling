@@ -31,7 +31,7 @@ NewProjectAudioProcessor::NewProjectAudioProcessor()
     NormalisableRange<float> frequencyRange(-100.0f, 0.0f);
     parameters.createAndAddParameter("frequencySliderID", "frequencySlider", "frequencySlider", frequencyRange, -80.0f, nullptr, nullptr);
     
-    NormalisableRange<float> widthRange(-2000.0f, 2000.0f);
+    NormalisableRange<float> widthRange(-1200.0f, 1200.0f, 6);
     parameters.createAndAddParameter("widthSliderID", "widthSlider", "widthSlider", widthRange, 0, nullptr, nullptr);
     
     NormalisableRange<float> SineRange(1, 512, 1);
